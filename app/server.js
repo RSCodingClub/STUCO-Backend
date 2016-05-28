@@ -1,15 +1,27 @@
-var fs = require('fs');
-var http = require('http');
+var express = require('express'),
+    app = express(),
+    path = require('path'),
+    morgan = require('morgan'),
+    bodyParser = require('body-parser'),
+    methodOverride = require('method-override');
 
-var server = http.createServer(function(req, res){
-	require(__dirname + "/routes")(req, res);
+var PORT = process.env.PORT | 3000;
+
+app.use(morgan('dev'));
+app.use(bodyParser.urlencoded({
+    extended: 'true'
+}));
+app.use(bodyParser.json());
+app.use(bodyParser.json({
+    type: 'application/vnd.api+json'
+}));
+app.use(methodOverride());
+
+app.listen(PORT, function() {
+    console.log('App listening on port ' + PORT);
+    require(__dirname + "/routes")(app);
 });
 
 process.on('uncaughtException', function(err) {
     console.log(err);
-});
-
-var PORT = process.env.PORT | 80;
-server.listen(PORT, function() {
-	console.log("Server Listening on port 80");
 });
