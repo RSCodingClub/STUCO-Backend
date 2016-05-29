@@ -1,0 +1,17 @@
+{
+    "name": "STUCO-Backend",
+    "version": "1.0.0",
+    "description": "",
+    "main": "app/server.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "Jeffrey Meyer",
+    "license": "MIT",
+    "dependencies": {
+        "body-parser": "^1.15.0",
+        "express": "^4.13.4",
+        "method-override": "^2.3.5",
+        "morgan": "^1.7.0"
+    }
+}
