@@ -1,0 +1,9 @@
+[{
+    "name": "Newb",
+    "desc": "You signed up. Good for you.",
+    "earn": 5
+}, {
+    "name": "Visitor Pass",
+    "desc": "Are you new here?",
+    "earn": 10
+}]

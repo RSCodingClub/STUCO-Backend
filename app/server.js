@@ -3,7 +3,8 @@ var express = require('express'),
     path = require('path'),
     morgan = require('morgan'),
     bodyParser = require('body-parser'),
-    methodOverride = require('method-override');
+    methodOverride = require('method-override'),
+	userUtils = require(__dirname + '/userutils');
 
 var PORT = process.env.PORT | 3000;
 
@@ -23,5 +24,10 @@ app.listen(PORT, function() {
 });
 
 process.on('uncaughtException', function(err) {
-    console.log(err);
+    console.log(err.stack);
 });
+
+//userUtils.createUser("823899009282884900098", "JEFFREY MEYER", "Jeffrey");
+//console.log(userUtils.userExists("100033758533830286348"));
+userUtils.giveBadge("100033758533830286348", 0);
+console.log(userUtils.getScore("100033758533830286348"));

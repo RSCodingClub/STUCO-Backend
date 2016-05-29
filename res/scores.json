@@ -1,1 +1,15 @@
-{"asdas341323sadm13239asd":23}
+[{
+    "name": "Name",
+    "nickname": "Namus",
+    "gid": "19993929999991999199900",
+    "badges": [0,1],
+    "scores": [{
+        "timestamp": 10023122312,
+        "value": 10,
+        "type": "location"
+    }, {
+        "timestamp": 1002312200,
+        "value": 10,
+        "type": "badge"
+    }],
+}]
