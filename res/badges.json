@@ -1,9 +1,11 @@
 [{
     "name": "Newb",
     "desc": "You signed up. Good for you.",
-    "earn": 5
+	"earn": "Earn one point by completing the signup process",
+    "reward": 5
 }, {
     "name": "Visitor Pass",
     "desc": "Are you new here?",
-    "earn": 10
+	"earn": "Go to your first event",
+    "reward": 10
 }]

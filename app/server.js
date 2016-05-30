@@ -4,7 +4,9 @@ var express = require('express'),
     morgan = require('morgan'),
     bodyParser = require('body-parser'),
     methodOverride = require('method-override'),
-	userUtils = require(__dirname + '/userutils');
+    userUtils = require(__dirname + '/userutils'),
+    badgeUtils = require(__dirname + '/badgeutils'),
+    scoreUtils = require(__dirname + '/scoreutils');
 
 var PORT = process.env.PORT | 3000;
 
@@ -29,5 +31,9 @@ process.on('uncaughtException', function(err) {
 
 //userUtils.createUser("823899009282884900098", "JEFFREY MEYER", "Jeffrey");
 //console.log(userUtils.userExists("100033758533830286348"));
-userUtils.giveBadge("100033758533830286348", 0);
-console.log(userUtils.getScore("100033758533830286348"));
+//badgeUtils.giveBadge("823899009282884900098", 0);
+// scoreUtils.generateLeaderboard(function(leaderboard) {
+// 	console.log(leaderboard);
+// });
+//console.log("823899009282884900098 Score: "+scoreUtils.getScore("823899009282884900098"));
+//console.log(badgeUtils.getBadge(0).desc);
