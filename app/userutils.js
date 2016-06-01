@@ -133,18 +133,29 @@ var userUtils = module.exports = {
     },
     loginUser: function(gid, name, nickname, callback) {
         console.log("\tloginUser(" + gid + "," + name + "," + nickname + typeof callback + ")");
-        userUtils.userExistsAsync(gid, function(exists) {
-            if (exists) {
-                userUtils.getUserAsync(gid, function(user) {
-					user.lastlogin = Date.now();
-					userUtils.setUser(user, function() {
-						callback(user);
-					});
-                });
-            } else {
-                userUtils.createUser(gid, name, nickname, callback);
-            }
-        });
+        if (gid == undefined || name == undefined || nickname == undefined || typeof nickname != "string" || typeof name != "string") {
+            callback({
+                error: {
+                    msg: "Invalid User Credentials",
+                    type: "LoginCredentialsException"
+                }
+            });
+        } else {
+            userUtils.userExistsAsync(gid, function(exists) {
+                if (exists) {
+                    userUtils.getUserAsync(gid, function(user) {
+                        user.lastlogin = Date.now();
+                        user.name = name;
+                        user.nickname = nickname;
+                        userUtils.setUser(user, function() {
+                            callback(user);
+                        });
+                    });
+                } else {
+                    userUtils.createUser(gid, name, nickname, callback);
+                }
+            });
+        }
     },
     createUser: function(gid, name, nickname, callback) {
         console.log("\tcreateUser(" + gid + "," + name + ", " + nickname + ")");
@@ -159,9 +170,9 @@ var userUtils = module.exports = {
             settings: {}
         };
         this.setUser(user, function() {
-			require(__dirname + '/badgeutils').giveBadge(gid, 0, function() {
-				callback(user);
-			});
+            require(__dirname + '/badgeutils').giveBadge(gid, 0, function() {
+                callback(user);
+            });
         });
     }
 };

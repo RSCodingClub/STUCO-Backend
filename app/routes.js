@@ -18,19 +18,19 @@ module.exports = function(app) {
         });
     });
     app.get('/api/user/getbadges/:gid', function(req, res) {
-		userUtils.userExistsAsync(req.params.gid, function(exists) {
+        userUtils.userExistsAsync(req.params.gid, function(exists) {
             if (exists) {
                 userUtils.getUserAsync(req.params.gid, function(user) {
-                	res.send(user.badges);
+                    res.send(user.badges);
                 });
             } else {
                 res.send([]);
             }
         });
     });
-	app.get('/api/leaderboard', function(req, res) {
+    app.get('/api/leaderboard', function(req, res) {
         scoreUtils.generateLeaderboard(function(leaderboard) {
-        	res.send(leaderboard);
+            res.send(leaderboard);
         });
     });
     app.post('/api/user/testlocation/', function(req, res) {
@@ -52,13 +52,16 @@ module.exports = function(app) {
 
     app.post('/api/user/login', function(req, res) {
         userUtils.loginUser(req.body.gid, req.body.name, req.body.nickname, function(user) {
-        	res.send(user);
+            res.send(user);
         });
     });
 
-	app.get('/api/badge/:bid', function(req, res) {
-		res.send(badgeUtils.getBadge(req.params.bid));
-	});
+    app.get('/api/badge/getbadge/:bid', function(req, res) {
+        res.send(badgeUtils.getBadge(req.params.bid));
+    });
+    app.get('/api/badge/getbadges', function(req, res) {
+        res.send(badgeUtils.getBadges());
+    });
     app.get('/', function(req, res) {
         res.send("Hello World");
     });

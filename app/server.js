@@ -31,7 +31,10 @@ process.on('uncaughtException', function(err) {
 
 //userUtils.createUser("823899009282884900098", "JEFFREY MEYER", "Jeffrey");
 //console.log(userUtils.userExists("100033758533830286348"));
-//badgeUtils.giveBadge("823899009282884900098", 0);
+// badgeUtils.giveBadge("100033758533830286348", 1);
+// badgeUtils.giveBadge("100033758533830286348", 2);
+// badgeUtils.giveBadge("100033758533830286348", 3);
+// badgeUtils.giveBadge("100033758533830286348", 4);
 // scoreUtils.generateLeaderboard(function(leaderboard) {
 // 	console.log(leaderboard);
 // });

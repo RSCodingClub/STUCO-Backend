@@ -37,6 +37,7 @@ var badgeUtils = module.exports = {
                         //users = JSON.parse(fs.readFileSync(__dirname + "/../private/users.json"));
                         scoreUtils.givePoints(gid, "badge", badgeUtils.getBadge(bid).reward, function() {
                             userUtils.getUserAsync(gid, function(user) {
+								console.log("USER", user);
                                 user.badges.push(bid);
                                 userUtils.setUser(user, function() {
                                     callback(true);

@@ -1,11 +1,26 @@
 [{
     "name": "Newb",
-    "desc": "You signed up. Good for you.",
+    "desc": "“You signed up. Good for you.”",
 	"earn": "Earn one point by completing the signup process",
     "reward": 5
 }, {
     "name": "Visitor Pass",
-    "desc": "Are you new here?",
+    "desc": "“Are you new here?”",
 	"earn": "Go to your first event",
     "reward": 10
+},{
+    "name": "C for Effort",
+    "desc": "“#Loser”",
+	"earn": "Don’t show up to an event you said you would be at.",
+    "reward": -5
+},{
+    "name": "Following the Leader",
+    "desc": "“Movin’ up”",
+	"earn": "Check the leaderboard for the first time",
+    "reward": 5
+},{
+    "name": "McFly",
+    "desc": "“Go home Marty.”",
+	"earn": "Sign up for two events scheduled at the same time.",
+    "reward": 0
 }]
