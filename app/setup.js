@@ -1,0 +1,71 @@
+var format = require('dateformat'),
+    path = require('path'),
+    morgan = require('morgan'),
+    bodyParser = require('body-parser'),
+    methodOverride = require('method-override'),
+    log = require('log-util'),
+    express = require('express'),
+    app = express();
+
+log.setLevel(log.Log.VERBOSE);
+log.setDateFormat("HH:MM:ss");
+
+var utils = require(__dirname + '/utils'),
+    userUtils = require(__dirname + '/userutils'),
+    badgeUtils = require(__dirname + '/badgeutils'),
+    scoreUtils = require(__dirname + '/scoreutils');
+
+app.use(morgan('dev'));
+morgan.token('method', function(req, res) {
+    var method = req.method;
+    var url = req.originalUrl || req.url,
+        length = 10;
+    return "[" + format("isoTime") + "] " + length < url.length ? url : ('' + method + utils.repeatStr(' ', length - url.length));
+    // return "[" + format("isoTime") + "] " + method;
+});
+morgan.token('url', function(req, res) {
+    var url = req.originalUrl || req.url,
+        length = 40;
+    return length < url.length ? url : ('' + url + utils.repeatStr(' ', length - url.length));
+});
+morgan.token('response-time', function(req, res) {
+    if (!res._header || !req._startAt) return '';
+    var diff = process.hrtime(req._startAt);
+    var ms = diff[0] * 1e3 + diff[1] * 1e-6;
+    ms = ms.toFixed(3);
+    var timeLength = 8;
+    return ('' + ms).length > timeLength ? ms : utils.repeatStr(' ', timeLength - ('' + ms).length) + ms;
+});
+app.use(bodyParser.urlencoded({
+    extended: 'true'
+}));
+app.use(bodyParser.json());
+app.use(bodyParser.json({
+    type: 'application/vnd.api+json'
+}));
+app.use(methodOverride());
+require(__dirname + "/server")(app);
+
+var killProcess = function(options) {
+    log.info("Closing App, running final processes.");
+    userUtils.saveUsers(function(err) {
+        if (err) {
+            log.error("FAILED TO SAVE USER DATA", err.stack);
+            userUtils.backupUsers(function(err) {
+                log.error("FAILED TO SAVE USER DATA DURING BACKUP", err.stack);
+            });
+        } else {
+            process.exit();
+        }
+    });
+}
+
+process.on('uncaughtException', function(err) {
+    log.error(err.stack);
+    killProcess({
+        exit: false
+    });
+});
+process.on('exit', killProcess);
+process.on('SIGTERM', killProcess);
+process.on('SIGINT', killProcess);

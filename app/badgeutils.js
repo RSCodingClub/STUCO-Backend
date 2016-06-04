@@ -1,21 +1,36 @@
 var fs = require('fs');
 var userUtils = require(__dirname + "/userutils");
 var scoreUtils = require(__dirname + "/scoreutils");
+var log = require('log-util');
 
 var badgeUtils = module.exports = {
+    badges: (function() {
+        log.verbose("badges()");
+        try {
+            return JSON.parse(fs.readFileSync(__dirname + "/../res/badges.json"));
+        } catch (e) {
+            log.error(e.stack);
+            return [];
+        }
+    })(),
     getBadges: function() {
-        console.log("\tgetBadges()");
-        return JSON.parse(fs.readFileSync(__dirname + "/../res/badges.json"));
+        log.verbose("getBadges()");
+        return this.badges;
     },
     getBadge: function(bid) {
-        console.log("\tgetBadge(" + bid + ")");
-        return this.getBadges()[bid];
+        log.verbose("getBadge(" + bid + ")");
+        var badge = this.getBadges()[bid];
+        if (badge !== undefined) {
+            return badge;
+        } else {
+            return new Error("Invalid Badge ID");
+        }
     },
-    hasBadgeAsync: function(gid, bid, callback) {
-        console.log("\thasBadgeAsync(" + gid + ", " + bid + ", " + typeof callback + ")");
+    hasBadge: function(subid, bid, callback) {
+        log.verbose("hasBadgeAsync(" + subid + ", " + bid + ", " + typeof callback + ")");
         if (typeof callback == "function") {
             var r = false;
-            userUtils.getUserAsync(gid, function(user) {
+            userUtils.getUser(subid, function(user) {
                 user.badges.forEach(function(b, i) {
                     if (b == bid) {
                         r = true;
@@ -25,40 +40,49 @@ var badgeUtils = module.exports = {
             });
         }
     },
-    giveBadge: function(gid, bid, callback) {
-        console.log("\tgiveBadge(" + gid + ", " + bid + ", " + typeof callback + ")");
+    giveBadge: function(subid, bid, callback) {
+        log.verbose("giveBadge(" + subid + ", " + bid + ", " + typeof callback + ")");
         if (callback == undefined) {
             callback = function() {};
         }
-        userUtils.userExistsAsync(gid, function(exists) {
-            if (exists) {
-                badgeUtils.hasBadgeAsync(gid, bid, function(has) {
-                    if (has == false) {
-                        //users = JSON.parse(fs.readFileSync(__dirname + "/../private/users.json"));
-                        scoreUtils.givePoints(gid, "badge", badgeUtils.getBadge(bid).reward, function() {
-                            userUtils.getUserAsync(gid, function(user) {
-								console.log("USER", user);
-                                user.badges.push(bid);
-                                userUtils.setUser(user, function() {
-                                    callback(true);
-                                });
-                            });
-                        });
-                    } else {
-                        callback(false);
-                    }
-                });
-            } else {
-                callback(false);
-            }
-        });
+        // if (userUtils.userExistsSync(subid)) {
+        //     if (!badgeUtils.hasBadgeSync(subid, bid)) {
+        //         //users = JSON.parse(fs.readFileSync(__dirname + "/../private/users.json"));
+        //         scoreUtils.givePointsSync(subid, "badge", badgeUtils.getBadge(bid).reward);
+        //         userUtils.users.forEach(function(u, i) {
+        //             if (u.subid == subid) {
+        //                 userUtils.users[i].badges.push(bid);
+        //             }
+        //         });
+		// 		log.debug("USERS", userUtils.users);
+        //     } else {
+        //         callback(new Error("User Already Has That Badge"));
+        //     }
+        // } else {
+        //     callback(new Error("User Not Found"));
+        // }
+		if (userUtils.userExistsSync(subid)) {
+			if (!this.hasBadgeSync(subid, bid)) {
+				var user = userUtils.getUserSync(subid);
+				user.badges.push(bid);
+				userUtils.setUser(subid, user, function(err, user) {
+					if (err) {
+						callback(err);
+					} else {
+						scoreUtils.givePointsSync(subid, "badge", badgeUtils.getBadge(bid).reward);
+						callback(undefined, user);
+					}
+				});
+			}
+		} else {
+			callback(new Error("User Not Found"));
+		}
     },
-    hasBadge: function(gid, bid) {
-        console.log("\thasBadge(" + gid + ", " + bid + ")");
-        var user = userUtils.getUser(gid),
+    hasBadgeSync: function(subid, bid) {
+        log.verbose("hasBadgeSync(" + subid + ", " + bid + ")");
+        var user = userUtils.getUser(subid),
             r = false;
-        console.log("BDGS", user.badges);
-        user.badges.forEach(function(b, i) {
+        userUtils.getUserSync(subid).badges.forEach(function(b, i) {
             if (b == bid) {
                 r = true;
             }

@@ -1,178 +1,265 @@
 var fs = require('fs');
-//var badgeUtils = require(__dirname + '/badgeutils');
-//var scoreUtils = require(__dirname + "/scoreutils");
+var request = require('request');
+var log = require('log-util');
+var format = require('dateformat');
 
 var userUtils = module.exports = {
-    getUsersAsync: function(callback) {
-        var readStream = fs.createReadStream(__dirname + "/../private/users.json");
-        var file = "";
-        readStream.on('data', function(data) {
-            //console.log("file chunk"+data.toString());
-            file += data.toString();
-            //console.log("FILE",file);
-        });
-
-        readStream.on('end', function() {
-            try {
-                callback(JSON.parse(file));
-            } catch (e) {
-                console.error("THERE WAS AN ERROR PARSING THE USER FILE", e.stack);
-                callback([]);
+    users: (function() {
+        log.verbose("users()");
+        try {
+            return JSON.parse(fs.readFileSync(__dirname + "/../private/users.json"));
+        } catch (e) {
+            log.error(e.stack);
+            return [];
+        }
+    })(),
+    verifyToken: function(token, callback) {
+        log.verbose("verifyToken(\"" + token.substring(0, 10) + "...\", " + typeof callback + ")");
+        if (typeof callback == "function") {
+            var baseUrl = "https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=";
+            var certsUrl = "https://www.googleapis.com/oauth2/v3/certs";
+            var requestUrl = baseUrl + token;
+            request.get(requestUrl, function(err, res, body) {
+                if (!err && res.statusCode == 200) {
+                    var user = JSON.parse(body);
+                    if (false /*user.exp < Date.now() + 5000*/) { //DISABLE EXPIRES
+                        callback(new Error("UserToken Has Expired"));
+                    } else {
+                        if (user.iss.startsWith("https://accounts.google.com") || user.iss.startsWith("accounts.google.com")) {
+                            request.get(certsUrl, function(error, resp, data) {
+                                var certs = JSON.parse(data).keys;
+                                var valid = false;
+                                certs.forEach(function(o, i) {
+                                    if (user.kid == o.kid) {
+                                        if (user.alg == o.alg) {
+                                            valid = true;
+                                        }
+                                    }
+                                });
+                                if (valid) {
+                                    callback(undefined, user);
+                                } else {
+                                    callback(new Error("Invalid TokenCertificate"));
+                                }
+                            });
+                        } else {
+                            callback(new Error("TokenIssuer is Invalid"));
+                        }
+                    }
+                } else {
+                    callback(new Error("Google Token Validation Failed"));
+                }
+            });
+        }
+    },
+    initUsers: function(callback) {
+        log.verbose("initUsers(" + typeof callback + ")");
+        if (callback == undefined || typeof callback !== "function") {
+            callback = function(err, users) {
+                return true;
+            }
+        }
+        fs.readFile(__dirname + "/../private/users.json", "utf-8", function(err, data) {
+            if (err) {
+                callback(err);
+            } else {
+                try {
+                    var users = JSON.parse(data);
+                    this.users = users;
+                    callback(undefined, users);
+                } catch (e) {
+					this.users = [];
+                    callback(e);
+					// callback(undefined, this.users);
+                }
             }
         });
     },
-    searchUsers: function(key, value) {
-        console.log("\tsearchUsers(" + key + "," + value + ")");
-        var r = [];
-        var users = this.getUsers();
-        var r = users.filter(function(o, i) {
-            // console.log(i,o.name);
-            return o[key] === value;
+    updateUsers: function(callback) {
+        // log.verbose("updateUsers(" + typeof callback + ")");
+        if (callback == undefined || typeof callback !== "function") {
+            callback = function(err, users) {
+                return true;
+            }
+        }
+        fs.writeFile(__dirname + "/../private/users.json", JSON.stringify(this.users), "utf-8", function(err) {
+            callback(err, this.users);
         });
-        // console.log("SEARCH USERS ("+value+"):", r);
+    },
+    saveUsers: function(callback) {
+        this.updateUsers(callback);
+    },
+    backupUsers: function(callback) {
+        log.verbose("backupUsers(" + typeof callback + ")");
+        var dir = __dirname + "/../private/backups/" + format('isoDate') + "/",
+            file = format(new Date(), 'HH_MM_ss') + ".json";
+        fs.readdir(dir, function(err, files) {
+            if (err) {
+                fs.mkdir(dir, function(err) {
+                    if (err) {
+                        callback(err);
+                    } else {
+                        fs.writeFile(dir + file, JSON.stringify(userUtils.users), "utf-8", function(err) {
+                            if (err)
+                                callback(err);
+                        });
+                    }
+                });
+            } else {
+                fs.writeFile(dir + file, JSON.stringify(userUtils.users), "utf-8", function(err) {
+                    if (err)
+                        callback(err);
+                });
+            }
+        });
+    },
+    getUsers: function(callback) {
+        log.verbose("getUsers(" + typeof callback + ")");
+        if (callback == undefined || typeof callback !== "function") {
+            callback = function(err, users) {
+                return true;
+            }
+        }
+        callback(this.users);
+    },
+    getUsersSync: function() {
+        log.verbose("getUsersSync()");
+        return this.users;
+    },
+    getUser: function(subid, callback) {
+        if (typeof callback == "function") {
+			var user = undefined;
+            log.verbose("getUser(" + subid + ", " + typeof callback + ")");
+            this.users.forEach(function(u, i) {
+                if (u.subid == subid) {
+	                user = u;
+                }
+            });
+			if (user) {
+				callback(undefined, user);
+			} else {
+				callback(new Error("User Not Found"));
+			}
+        }
+    },
+    getUserSync: function(subid) {
+        log.verbose("getUserSync(" + subid + ")");
+        var r = undefined;
+        this.users.forEach(function(u, i) {
+            if (u.subid == subid) {
+                r = u;
+            }
+        });
         return r;
     },
-    searchUsersAsync: function(key, value, callback) {
-        console.log("\tsearchUsersAsync(" + key + "," + value + ", " + typeof callback + ")");
-        var r = [];
-        this.getUsersAsync(function(users) {
-            var r = users.filter(function(o, i) {
-                // console.log(i,o.name);
-                return o[key] === value;
-            });
-            callback(r);
+    userExists: function(subid, callback) {
+        log.verbose("userExists(" + subid + ", " + typeof callback + ")");
+        this.getUser(subid, function(err, user) {
+            if (err) {
+                callback(false);
+            } else if (user !== undefined) {
+                callback(true);
+            } else {
+                callback(false);
+            }
         });
     },
-    getUser: function(gid) {
-        console.log("\tgetUser(" + gid + ")");
-        var user = this.searchUsers("gid", gid)[0];
-        // console.log("GET USER ("+gid+"):", user);
-        return user;
+    userExistsSync: function(subid) {
+        log.verbose("userExistsSync(" + subid + ")");
+        return this.getUserSync(subid) !== undefined;
     },
-    getUserAsync: function(gid, callback) {
-        console.log("\tgetUserAsync(" + gid + ", " + typeof callback + ")");
-        if (typeof callback == "function") {
-            this.searchUsersAsync("gid", gid, function(users) {
-                callback(users[0]);
-            });
+    setUser: function(s, u, c) {
+        var args = arguments,
+            callback = c || function(err) {
+                if (err)
+                    log.error(err.stack);
+            },
+            subid = s,
+            user = u,
+            r = false;
+        for (var i = 0; i < args.length; i++) {
+            var o = args[i];
+            if (typeof o == "function") {
+                callback = o;
+            } else if (typeof o == "string") {
+                subid == o;
+            } else if (typeof o == "object") {
+                user = o;
+            }
+        }
+        this.users.forEach(function(u, i) {
+            if (u.subid == subid) {
+                this.users[i] = user;
+                r = true;
+            }
+        });
+        if (r == false) {
+            callback(new Error("User Not Found"));
+        } else if (r == true) {
+            callback(undefined, user);
         }
     },
-    // getUsers: function() {
-    //     console.log("\tgetUsers()");
-    //     return JSON.parse(fs.readFileSync(__dirname + "/../private/users.json"));
-    // },
-    // getUsersAsync: function(callback) {
-    //     console.log("\tgetUsersAsync(" + typeof callback + ")");
-    //     if (typeof callback == "function") {
-    //         fs.readFile(__dirname + "/../private/users.json", function(err, data) {
-    //             if (err == undefined) {
-    //                 var r = [];
-    //                 try {
-    //                     r = JSON.parse(data);
-    //                 } catch (e) {
-    //                     console.error("THERE WAS AN ERROR PARSING THE USER FILE");
-    //                     r = [];
-    //                 }
-    //                 callback(r);
-    //             } else {
-    //                 throw err;
-    //                 return false;
-    //             }
-    //         });
+    // setUserOld: function(s, u, c) {
+    //     var args = arguments,
+    //         callback = c || function(err) {
+    //             if (err)
+    //                 log.error(err.stack);
+    //         },
+    //         sub = s,
+    //         user = u;
+    //     for (var i = 0; i < args.length; i++) {
+    //         var o = args[i];
+    //         if (typeof o == "function") {
+    //             callback = o;
+    //         } else if (typeof o == "string") {
+    //             sub == o;
+    //         } else if (typeof o == "object") {
+    //             user = o;
+    //         }
     //     }
+    //     if (typeof user !== "object") {
+    //         callback(new Error("Invalid User " + typeof user));
+    //     }
+    //     if (sub == undefined) {
+    //         sub == user.sub
+    //     }
+    //     userUtils.userExists(sub, function(exists) {
+    //         if (exists) {
+    //             userUtils.users.forEach(function(u, i) {
+    //                 if (u.sub == sub) {
+    //                     users[i] = user;
+    //                 }
+    //             });
+    //             callback(undefined, user);
+    //         } else {
+    //             userUtils.users.push(user);
+    //             callback(undefined, user);
+    //         }
+    //         //fs.writeFile(__dirname + "/../private/users.json", JSON.stringify(users), 'utf-8', callback);
+    //     });
     // },
-    setUser: function(user, gid, callback) {
-        console.log("\tsetUser(" + user + "," + (typeof gid) + ", " + (typeof callback) + ")");
-        this.getUsersAsync(function(users) {
-            if (gid == undefined)
-                gid = user.gid;
-            if (typeof gid == "function") {
-                callback = gid;
-                gid = user.gid;
-            }
-            if (callback == undefined) {
-                callback = function(err, data) {
-                    if (err)
-                        throw err;
-                }
-            }
-            userUtils.userExistsAsync(gid, function(exists) {
-                if (exists) {
-                    users.forEach(function(u, i) {
-                        if (u.gid == gid) {
-                            users[i] = user;
-                        }
-                    });
-                } else {
-                    users.push(user);
-                }
-                fs.writeFile(__dirname + "/../private/users.json", JSON.stringify(users), 'utf-8', callback);
-            });
-        });
-    },
-    userExists: function(gid) {
-        console.log("\tuserExists(" + gid + ")");
-        var user = this.getUser(gid);
-        if (user == undefined || user == false) {
-            return false;
-        } else {
-            return true;
-        }
-    },
-    userExistsAsync: function(gid, callback) {
-        console.log("\tuserExistsAsync(" + gid + "," + typeof callback + ")");
-        if (typeof callback == "function") {
-            this.getUserAsync(gid, function(user) {
-                if (user == undefined || user == false) {
-                    callback(false);
-                } else {
-                    callback(true);
-                }
-            });
-        }
-    },
-    loginUser: function(gid, name, nickname, callback) {
-        console.log("\tloginUser(" + gid + "," + name + "," + nickname + typeof callback + ")");
-        if (gid == undefined || name == undefined || nickname == undefined || typeof nickname != "string" || typeof name != "string") {
-            callback({
-                error: {
-                    msg: "Invalid User Credentials",
-                    type: "LoginCredentialsException"
-                }
-            });
-        } else {
-            userUtils.userExistsAsync(gid, function(exists) {
-                if (exists) {
-                    userUtils.getUserAsync(gid, function(user) {
-                        user.lastlogin = Date.now();
-                        user.name = name;
-                        user.nickname = nickname;
-                        userUtils.setUser(user, function() {
-                            callback(user);
-                        });
-                    });
-                } else {
-                    userUtils.createUser(gid, name, nickname, callback);
-                }
-            });
-        }
-    },
-    createUser: function(gid, name, nickname, callback) {
-        console.log("\tcreateUser(" + gid + "," + name + ", " + nickname + ")");
+    createUser: function(subid, nickname, callback) {
+        log.verbose("createUser(" + subid + ", " + nickname + ", " + typeof callback + ")");
         var user = {
-            gid: gid,
-            name: name,
-            nickname: nickname, // Apply Censorship for profanity or rude names
-            created: Date.now(),
-            lastlogin: Date.now(),
+            subid: subid,
+            nickname: nickname,
             badges: [],
             scores: [],
             settings: {}
         };
-        this.setUser(user, function() {
-            require(__dirname + '/badgeutils').giveBadge(gid, 0, function() {
-                callback(user);
-            });
+        userUtils.users.push(user);
+        //this.setUser(user, function(err) {
+        //    if (err) {
+        //        callback(err);
+        //    } else {
+        require(__dirname + '/badgeutils').giveBadge(subid, 0, function(err) {
+            if (err) {
+                callback(err)
+            } else {
+                callback(undefined, user);
+            }
         });
+        //    }
+        //});
     }
 };
