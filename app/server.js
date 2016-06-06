@@ -1,65 +1,57 @@
 var log = require('log-util');
 var userUtils = require(__dirname + '/userutils');
+var cluster = require('cluster');
 
 module.exports = function(app) {
-	var PORT = process.env.PORT | 3000;
-	userUtils.initUsers(function(err, users) {
-	    if (err) {
-	        log.error(err.stack);
-	        process.exit(169);
-	    } else {
-	        setInterval(function() {
-	            userUtils.updateUsers(function(err, users) {
-	                if (err) {
-	                    log.error(err.stack);
-	                    process.exit(169);
-	                }
-	            });
-	        }, 1000);
-	        log.info("Storing Data for " + userUtils.getUsersSync().length + " users");
+    var PORT = process.env.PORT | 3000;
+    userUtils.initUsers(function(err, users) {
+        if (err) {
+            log.error(err.stack);
+            process.exit(169);
+        } else {
+            setInterval(function() {
+                userUtils.updateUsers(function(err, users) {
+                    if (err) {
+                        log.error(err.stack);
+                        process.exit(169);
+                    }
+                });
+            }, 1000);
+            log.info("Storing Data for " + userUtils.getUsersSync().length + " users");
 
-	        app.listen(PORT, function() {
+            if (cluster.isMaster) {
+                var numWorkers = require('os').cpus().length;
+
+                console.log('Master cluster setting up ' + numWorkers + ' workers...');
+
+                for (var i = 0; i < numWorkers; i++) {
+                    cluster.fork();
+                }
+
+                cluster.on('online', function(worker) {
+                    console.log('Worker ' + worker.process.pid + ' is online');
+                });
+
+                cluster.on('exit', function(worker, code, signal) {
+                    console.log('Worker ' + worker.process.pid + ' died with code: ' + code + ', and signal: ' + signal);
+                    console.log('Starting a new worker');
+                    cluster.fork();
+                });
+            } else {
 				var badgeRoute = require(__dirname + "/routes/api/badge")(app),
 					userRoute = require(__dirname + "/routes/api/user")(app),
 					eventRoute = require(__dirname + "/routes/api/event")(app),
 					mainRoute = require(__dirname + "/routes/routes")(app)
-				log.info('App listening on port ' + PORT);
-
-
-				// require(__dirname + '/eventutils').atEvent("3ahsj5dehr2bro3pkf9i24kov0", 38.521131, -90.493044, 50, function(err, atevent) {
-				// 	console.log(err, atevent);
-                //     if (err) {
-                //         log.error(err)
-                //     } else {
-				// 		var user = userUtils.getUserSync("100033758533830286348");
-				// 		var already = false;
-		        //         user.scores.forEach(function(s, i) {
-		        //             if (s.eid == "3ahsj5dehr2bro3pkf9i24kov0") {
-		        //                 already = true;
-		        //             }
-		        //         });
-		        //         if (already) {
-				// 			log.error(new Error("Cannot Checkin To The Same Event"));
-		        //         } else {
-				// 			if (atevent) {
-				// 				require(__dirname + '/eventutils').checkin("100033758533830286348", "3ahsj5dehr2bro3pkf9i24kov0", function(err, user) {
-				// 					console.log("CHECKIN", err, user);
-				// 				});
-				// 			} else {
-				// 				log.error(atevent);
-				// 			}
-				// 		}
-                //     }
-                // });
-
-
-				userUtils.backupUsers(function(err) {
-					if (err)
-						log.error("FATAL FAILED TO SAVE USER BACKUP", err)
-				});
-	        });
-	    }
-	});
+				var server = app.listen(PORT, function() {
+	                log.info('Process ' + process.pid + ' listening on port ' + PORT);
+	            });
+            }
+            userUtils.backupUsers(function(err) {
+                if (err)
+                    log.error("FATAL FAILED TO SAVE USER BACKUP", err)
+            });
+        }
+    });
 };
 // require(__dirname + '/utils').getLocationFromAddress("Quail Creek Golf Course (6022 Wells Road, 63128)", function(err, location) {
 // 	log.info("Location for" + JSON.stringify(location));

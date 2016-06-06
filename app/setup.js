@@ -17,16 +17,18 @@ var utils = require(__dirname + '/utils'),
 
 app.use(morgan('dev'));
 morgan.token('method', function(req, res) {
-    var method = req.method;
-    var url = req.originalUrl || req.url,
-        length = 10;
-    return "[" + format("isoTime") + "] " + length < url.length ? url : ('' + method + utils.repeatStr(' ', length - url.length));
-    // return "[" + format("isoTime") + "] " + method;
+    var method = req.method,
+		time = "[" + format("isoTime") + "] ",
+		length = 8,
+		space = utils.repeatStr(' ', length - req.method.length),
+		processid = "[" + process.pid + "] ";
+    return time + processid + method + space;
 });
 morgan.token('url', function(req, res) {
     var url = req.originalUrl || req.url,
-        length = 40;
-    return length < url.length ? url : ('' + url + utils.repeatStr(' ', length - url.length));
+        length = 40,
+		space = length < url.length ? '' : (utils.repeatStr(' ', length - url.length));
+    return url + space;
 });
 morgan.token('response-time', function(req, res) {
     if (!res._header || !req._startAt) return '';
