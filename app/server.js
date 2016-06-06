@@ -25,6 +25,34 @@ module.exports = function(app) {
 					mainRoute = require(__dirname + "/routes/routes")(app)
 				log.info('App listening on port ' + PORT);
 
+
+				// require(__dirname + '/eventutils').atEvent("3ahsj5dehr2bro3pkf9i24kov0", 38.521131, -90.493044, 50, function(err, atevent) {
+				// 	console.log(err, atevent);
+                //     if (err) {
+                //         log.error(err)
+                //     } else {
+				// 		var user = userUtils.getUserSync("100033758533830286348");
+				// 		var already = false;
+		        //         user.scores.forEach(function(s, i) {
+		        //             if (s.eid == "3ahsj5dehr2bro3pkf9i24kov0") {
+		        //                 already = true;
+		        //             }
+		        //         });
+		        //         if (already) {
+				// 			log.error(new Error("Cannot Checkin To The Same Event"));
+		        //         } else {
+				// 			if (atevent) {
+				// 				require(__dirname + '/eventutils').checkin("100033758533830286348", "3ahsj5dehr2bro3pkf9i24kov0", function(err, user) {
+				// 					console.log("CHECKIN", err, user);
+				// 				});
+				// 			} else {
+				// 				log.error(atevent);
+				// 			}
+				// 		}
+                //     }
+                // });
+
+
 				userUtils.backupUsers(function(err) {
 					if (err)
 						log.error("FATAL FAILED TO SAVE USER BACKUP", err)
@@ -33,6 +61,9 @@ module.exports = function(app) {
 	    }
 	});
 };
+// require(__dirname + '/utils').getLocationFromAddress("Quail Creek Golf Course (6022 Wells Road, 63128)", function(err, location) {
+// 	log.info("Location for" + JSON.stringify(location));
+// });
 
 // userUtils.verifyToken("eyJhbGciOiJSUzI1NiIsImtpZCI6IjI5YzVlMmIzYThjMTQyOWQ3MzA0M2EyNzJkMGVkMWRjYTQ1NjJjYTYifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhdWQiOiI5Njc3MjMzMDk2MzItYW01b2FrOTdxazhuNmZzdTFrYWdlb3B2NGJlOXRqNXUuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDAwMzM3NTg1MzM4MzAyODYzNDgiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXpwIjoiOTY3NzIzMzA5NjMyLWQ2dDRvNGhwOGhnaXU0NXNvbTlsMGVqZTEyMnI5bGM4LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiZW1haWwiOiJkb25ueXdlZWszQGdtYWlsLmNvbSIsImlhdCI6MTQ2NDc1NDU5MCwiZXhwIjoxNDY0NzU4MTkwLCJuYW1lIjoiRG9ubnkgU2hhdyIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vLVVVbm5PXzFfYjhFL0FBQUFBQUFBQUFJL0FBQUFBQUFBQUl3L05jTGE3Q0NHeE80L3M5Ni1jL3Bob3RvLmpwZyIsImdpdmVuX25hbWUiOiJEb25ueSIsImZhbWlseV9uYW1lIjoiU2hhdyIsImxvY2FsZSI6ImVuIn0.B159kZA2PxidKmRhj7DclpiRN_2AvjZrn1CNa_8uQ5fiet3f1k2OZaJstA1Mjf-GBh5iXhRagZ6rkX1OcZ9m9TDyEtZvv-xgYF-ilQkgjZqo1P7ucAJ1SB-n8vFnAF5gsq5GQOIP7owS1JoIuyVhCZUBksMB0FtuhxI8aoYsB5ftV1VyjJ-EmY_rpmqCQIw-K9Ez9q9k5WSrcifjUGuoJFrA96bTlZylF1KXEv4TffDUCr4FsDxiPowefi2AAAPLtLDnHzll7a8sI45Q-QoPRASe6hpQZygpXlZwmUJYx0qsboy6-prSW66DFJMUErALqIrB1HuwJBX91uVPxZrp0g", function(err, user) {
 //     if (err) {

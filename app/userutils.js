@@ -93,25 +93,29 @@ var userUtils = module.exports = {
         log.verbose("backupUsers(" + typeof callback + ")");
         var dir = __dirname + "/../private/backups/" + format('isoDate') + "/",
             file = format(new Date(), 'HH_MM_ss') + ".json";
-        fs.readdir(dir, function(err, files) {
-            if (err) {
-                fs.mkdir(dir, function(err) {
-                    if (err) {
-                        callback(err);
-                    } else {
-                        fs.writeFile(dir + file, JSON.stringify(userUtils.users), "utf-8", function(err) {
-                            if (err)
-                                callback(err);
-                        });
-                    }
-                });
-            } else {
-                fs.writeFile(dir + file, JSON.stringify(userUtils.users), "utf-8", function(err) {
-                    if (err)
-                        callback(err);
-                });
-            }
-        });
+		if (this.users == [] || this.users == "") {
+			callback(new Error("User File Empty"));
+		} else {
+			fs.readdir(dir, function(err, files) {
+	            if (err) {
+	                fs.mkdir(dir, function(err) {
+	                    if (err) {
+	                        callback(err);
+	                    } else {
+	                        fs.writeFile(dir + file, JSON.stringify(userUtils.users), "utf-8", function(err) {
+	                            if (err)
+	                                callback(err);
+	                        });
+	                    }
+	                });
+	            } else {
+	                fs.writeFile(dir + file, JSON.stringify(userUtils.users), "utf-8", function(err) {
+	                    if (err)
+	                        callback(err);
+	                });
+	            }
+	        });
+		}
     },
     getUsers: function(callback) {
         log.verbose("getUsers(" + typeof callback + ")");
@@ -127,9 +131,9 @@ var userUtils = module.exports = {
         return this.users;
     },
     getUser: function(subid, callback) {
+		log.verbose("getUser(" + subid + ", " + typeof callback + ")");
         if (typeof callback == "function") {
 			var user = undefined;
-            log.verbose("getUser(" + subid + ", " + typeof callback + ")");
             this.users.forEach(function(u, i) {
                 if (u.subid == subid) {
 	                user = u;
@@ -152,6 +156,19 @@ var userUtils = module.exports = {
         });
         return r;
     },
+	getGoogleUser: function(subid, callback) {
+		log.verbose("getGoogleUser(" + subid + ", " + typeof callback + ")");
+		var API_KEY = "AIzaSyDQhrNxeNTp-uONV9fUuElCylSQF2MHMtI";
+		var baseUrl = "https://www.googleapis.com/plus/v1/people/" + subid + "?key=" + API_KEY;
+		request.get(baseUrl, function(err, res, body) {
+			if (err) {
+				callback(err);
+			} else {
+				var data = JSON.parse(body);
+				callback(undefined, data);
+			}
+		});
+	},
     userExists: function(subid, callback) {
         log.verbose("userExists(" + subid + ", " + typeof callback + ")");
         this.getUser(subid, function(err, user) {
@@ -187,6 +204,7 @@ var userUtils = module.exports = {
                 user = o;
             }
         }
+		log.verbose("setUser(" + subid + ", " + user + ", " + typeof callback + ")");
         this.users.forEach(function(u, i) {
             if (u.subid == subid) {
                 this.users[i] = user;
@@ -199,45 +217,6 @@ var userUtils = module.exports = {
             callback(undefined, user);
         }
     },
-    // setUserOld: function(s, u, c) {
-    //     var args = arguments,
-    //         callback = c || function(err) {
-    //             if (err)
-    //                 log.error(err.stack);
-    //         },
-    //         sub = s,
-    //         user = u;
-    //     for (var i = 0; i < args.length; i++) {
-    //         var o = args[i];
-    //         if (typeof o == "function") {
-    //             callback = o;
-    //         } else if (typeof o == "string") {
-    //             sub == o;
-    //         } else if (typeof o == "object") {
-    //             user = o;
-    //         }
-    //     }
-    //     if (typeof user !== "object") {
-    //         callback(new Error("Invalid User " + typeof user));
-    //     }
-    //     if (sub == undefined) {
-    //         sub == user.sub
-    //     }
-    //     userUtils.userExists(sub, function(exists) {
-    //         if (exists) {
-    //             userUtils.users.forEach(function(u, i) {
-    //                 if (u.sub == sub) {
-    //                     users[i] = user;
-    //                 }
-    //             });
-    //             callback(undefined, user);
-    //         } else {
-    //             userUtils.users.push(user);
-    //             callback(undefined, user);
-    //         }
-    //         //fs.writeFile(__dirname + "/../private/users.json", JSON.stringify(users), 'utf-8', callback);
-    //     });
-    // },
     createUser: function(subid, nickname, callback) {
         log.verbose("createUser(" + subid + ", " + nickname + ", " + typeof callback + ")");
         var user = {
@@ -248,10 +227,6 @@ var userUtils = module.exports = {
             settings: {}
         };
         userUtils.users.push(user);
-        //this.setUser(user, function(err) {
-        //    if (err) {
-        //        callback(err);
-        //    } else {
         require(__dirname + '/badgeutils').giveBadge(subid, 0, function(err) {
             if (err) {
                 callback(err)
@@ -259,7 +234,5 @@ var userUtils = module.exports = {
                 callback(undefined, user);
             }
         });
-        //    }
-        //});
     }
 };

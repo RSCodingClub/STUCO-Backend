@@ -1,4 +1,7 @@
 var userUtils = require(__dirname + '/../../userutils');
+var scoreUtils = require(__dirname + '/../../scoreutils');
+var eventUtils = require(__dirname + '/../../eventutils');
+var Utils = require(__dirname + '/../../utils');
 var log = require('log-util');
 
 module.exports = function(app) {
@@ -35,6 +38,9 @@ module.exports = function(app) {
             res.send(false);
         }
     });
+    app.get('/api/user/atevent/:subid/:eid', function(req, res) {
+        res.send(eventUtils.already(req.params.subid, req.params.eid).toString());
+    });
     app.post('/api/user/login', function(req, res) {
         if (req.body.usertoken == undefined) {
             res.statusCode = 400;
@@ -45,7 +51,7 @@ module.exports = function(app) {
             userUtils.verifyToken(req.body.usertoken, function(err, user) {
                 if (!err && user !== undefined) {
                     if (userUtils.userExistsSync(user.sub)) {
-                        var u = userUtils.getUserSync(user.subid);
+                        var u = userUtils.getUserSync(user.sub);
                         res.send(u);
                     } else {
                         if (req.body.nickname == undefined) {

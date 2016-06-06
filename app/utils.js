@@ -1,6 +1,9 @@
+var log = require('log-util');
+var request = require('request');
+
 module.exports = {
     getDistance: function(lat1, lng1, lat2, lng2) {
-        log.verbose("\tgetDistance(" + lat2 + "," + lng2 + ")");
+        log.verbose("getDistance(" + lat1 + ", " + lng1 + ", " + lat2 + ", " + lng2 + ")");
         // var lat1 = 38.521131;
         // var lng1 = -90.493044;
 
@@ -15,21 +18,26 @@ module.exports = {
         return dist;
     },
     getLocationFromAddress: function(address, callback) {
-		var API_KEY = "AIzaSyDQhrNxeNTp-uONV9fUuElCylSQF2MHMtI";
-        var addressURI = encodeURIComponent(address);
-        var locationURL = "https://maps.googleapis.com/maps/api/geocode/json?key=" + API_KEY + "&address=" + addressURI;
-        request.get(locationURL, function(err, resp, body) {
-            if (err) {
-                callback(err);
-            } else {
-                var data = JSON.parse(body),
-                    r = {
-                        lat: results[0].geometry.location.lat,
-                        lng: results[0].geometry.location.lng
-                    };
-                callback(undefined, r);
-            }
-        });
+		log.verbose("getLocationFromAddress(" + address + ", " + typeof callback + ")");
+		if (typeof callback == "function") {
+			var API_KEY = "AIzaSyDQhrNxeNTp-uONV9fUuElCylSQF2MHMtI";
+	        var addressURI = encodeURIComponent(address);
+	        var locationURL = "https://maps.googleapis.com/maps/api/geocode/json?key=" + API_KEY + "&address=" + addressURI;
+	        request.get(locationURL, function(err, resp, body) {
+	            if (err) {
+	                callback(err);
+	            } else {
+	                var data = JSON.parse(body),
+	                    r = {
+	                        lat: data.results[0].geometry.location.lat,
+	                        lng: data.results[0].geometry.location.lng
+	                    };
+	                callback(undefined, r);
+	            }
+	        });
+		} else {
+			console.log("invalid callback type");
+		}
     },
     repeatStr: function(str, count) {
         var finalStr = '' + str;

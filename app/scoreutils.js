@@ -2,27 +2,19 @@ var userUtils = require(__dirname + "/userutils");
 var log = require('log-util');
 
 module.exports = {
-    // givePoints: function(subid, type, value, callback) {
-    // 	log.verbose("givePoints("+subid+", "+ type + ", "+ value + ", " + typeof callback + ")");
-    //     console.log("GIVE POINTS (" + subid + "): " + value + " [" + type + "]");
-    //     // userUtils.getUserAsync(subid, function(user) {
-    //     //     user.scores.push({
-    //     //         type: type,
-    //     //         value: value,
-    //     //         timestamp: Date.now()
-    //     //     });
-    //     //     userUtils.setUser(user, callback);
-    //     // });
-    // },
-    givePointsSync: function(subid, type, value) {
+    givePointsSync: function(subid, type, value, eid) {
         log.verbose("givePointsSync(" + subid + ", " + type + ", " + value + ")");
         log.debug("GIVE POINTS (" + subid + "): " + value + " [" + type + "]");
         if (userUtils.userExistsSync(subid)) {
             var user = userUtils.getUserSync(subid);
-            user.scores.push({
+            var score = {
                 type: type,
-                value: value
-            });
+                value: value,
+                timestamp: Date.now(),
+                eid: eid
+            };
+            user.scores.push(score);
+            console.log("SCORES", score);
             userUtils.setUser(subid, user);
         } else {
             return new Error("User Not Found");
