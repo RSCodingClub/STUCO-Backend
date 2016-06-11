@@ -10,6 +10,8 @@ var format = require('dateformat'),
 log.setLevel(log.Log.VERBOSE);
 log.setDateFormat("HH:MM:ss");
 
+global.DIR = __dirname;
+
 var utils = require(__dirname + '/utils'),
     userUtils = require(__dirname + '/userutils'),
     badgeUtils = require(__dirname + '/badgeutils'),

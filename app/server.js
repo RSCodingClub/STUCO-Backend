@@ -1,6 +1,19 @@
 var log = require('log-util');
-var userUtils = require(__dirname + '/userutils');
-var cluster = require('cluster');
+var userUtils = require(global.DIR + '/userutils');
+var Utils = require(global.DIR + '/utils');
+var express = require('express');
+
+var apis = {
+	user: {
+		v1: require(global.DIR + "/routes/api/user/v1")
+	},
+	badge: {
+		v1: require(global.DIR + "/routes/api/badge/v1")
+	},
+	events: {
+		v1: require(global.DIR + "/routes/api/event/v1")
+	}
+};
 
 module.exports = function(app) {
     var PORT = process.env.PORT | 3000;
@@ -15,41 +28,13 @@ module.exports = function(app) {
         });
     }, 1000);
 
-    if (cluster.isMaster) {
-        var numWorkers = process.env.THREADS | require('os').cpus().length;
-		// numWorkers = 1;
-
-        console.log('Master cluster setting up ' + numWorkers + ' workers...');
-
-        for (var i = 0; i < numWorkers; i++) {
-            cluster.fork();
-        }
-
-        cluster.on('online', function(worker) {
-            console.log('Worker ' + worker.process.pid + ' is online');
-        });
-
-        cluster.on('exit', function(worker, code, signal) {
-            console.log('Worker ' + worker.process.pid + ' died with code: ' + code + ', and signal: ' + signal);
-            console.log('Starting a new worker');
-            cluster.fork();
-        });
-    } else {
-		process.on('message', function(message) {
-            if (message.type === 'shutdown') {
-                process.exit(0);
-            }
-        });
-        var badgeRoute = require(__dirname + "/routes/api/badge")(app),
-            userRoute = require(__dirname + "/routes/api/user")(app),
-            eventRoute = require(__dirname + "/routes/api/event")(app),
-            mainRoute = require(__dirname + "/routes/routes")(app),
-            server = app.listen(PORT, function() {
-                log.info('Process ' + process.pid + ' listening on port ' + PORT);
-            });
-    }
-    userUtils.backupUsers(function(err) {
-        if (err)
-            log.error("FATAL FAILED TO SAVE USER BACKUP", err)
+    Utils.initCluster(function() {
+        app.use('/api/user/v1/', apis.user.v1);
+		app.use('/api/badge/v1/', apis.badge.v1);
+		app.use('/api/event/v1/', apis.events.v1);
+        app.listen(PORT);
+        log.info('Process ' + process.pid + ' listening on port ' + PORT);
     });
+
+    userUtils.backupUsers();
 };

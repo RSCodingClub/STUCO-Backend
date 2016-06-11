@@ -1,5 +1,6 @@
 var log = require('log-util');
 var request = require('request');
+var cluster = require('cluster');
 
 module.exports = {
     getDistance: function(lat1, lng1, lat2, lng2) {
@@ -43,5 +44,32 @@ module.exports = {
             finalStr += str;
         }
         return finalStr;
-    }
+    },
+	initCluster: function(callback) {
+		if (cluster.isMaster) {
+	        var numWorkers = process.env.THREADS | require('os').cpus().length;
+	        log.debug('Master cluster setting up ' + numWorkers + ' workers...');
+
+	        for (var i = 0; i < numWorkers; i++) {
+	            cluster.fork();
+	        }
+
+	        cluster.on('online', function(worker) {
+	            log.debug('Worker ' + worker.process.pid + ' is online');
+	        });
+
+	        cluster.on('exit', function(worker, code, signal) {
+	            log.warn('Worker ' + worker.process.pid + ' died with code: ' + code + ', and signal: ' + signal);
+	            log.info('Starting a new worker');
+	            cluster.fork();
+	        });
+	    } else {
+			process.on('message', function(message) {
+	            if (message.type === 'shutdown') {
+	                process.exit(0);
+	            }
+	        });
+			callback();
+	    }
+	}
 };

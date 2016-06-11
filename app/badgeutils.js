@@ -45,38 +45,22 @@ var badgeUtils = module.exports = {
         if (callback == undefined) {
             callback = function() {};
         }
-        // if (userUtils.userExistsSync(subid)) {
-        //     if (!badgeUtils.hasBadgeSync(subid, bid)) {
-        //         //users = JSON.parse(fs.readFileSync(__dirname + "/../private/users.json"));
-        //         scoreUtils.givePointsSync(subid, "badge", badgeUtils.getBadge(bid).reward);
-        //         userUtils.users.forEach(function(u, i) {
-        //             if (u.subid == subid) {
-        //                 userUtils.users[i].badges.push(bid);
-        //             }
-        //         });
-		// 		log.debug("USERS", userUtils.users);
-        //     } else {
-        //         callback(new Error("User Already Has That Badge"));
-        //     }
-        // } else {
-        //     callback(new Error("User Not Found"));
-        // }
-		if (userUtils.userExistsSync(subid)) {
-			if (!this.hasBadgeSync(subid, bid)) {
-				var user = userUtils.getUserSync(subid);
-				user.badges.push(bid);
-				userUtils.setUser(subid, user, function(err, user) {
-					if (err) {
-						callback(err);
-					} else {
-						scoreUtils.givePointsSync(subid, "badge", badgeUtils.getBadge(bid).reward);
-						callback(undefined, user);
-					}
-				});
-			}
-		} else {
-			callback(new Error("User Not Found"));
-		}
+        if (userUtils.userExistsSync(subid)) {
+            if (!this.hasBadgeSync(subid, bid)) {
+                var user = userUtils.getUserSync(subid);
+                user.badges.push(bid);
+                userUtils.setUser(subid, user, function(err, user) {
+                    if (err) {
+                        callback(err);
+                    } else {
+                        scoreUtils.givePointsSync(subid, "badge", badgeUtils.getBadge(bid).reward);
+                        callback(undefined, user);
+                    }
+                });
+            }
+        } else {
+            callback(new Error("User Not Found"));
+        }
     },
     hasBadgeSync: function(subid, bid) {
         log.verbose("hasBadgeSync(" + subid + ", " + bid + ")");

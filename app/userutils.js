@@ -70,6 +70,9 @@ var userUtils = module.exports = {
         this.updateUsers(callback);
     },
     backupUsers: function(callback) {
+		if (typeof callback !== "function") {
+			callback = function(err){};
+		}
         log.verbose("backupUsers(" + typeof callback + ")");
         var dir = __dirname + "/../private/backups/" + format('isoDate') + "/",
             file = format(new Date(), 'HH_MM_ss') + ".json";
