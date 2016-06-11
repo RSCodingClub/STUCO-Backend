@@ -3,7 +3,9 @@ var request = require('request');
 var log = require('log-util');
 var format = require('dateformat');
 
+// @ module userUtils
 var userUtils = module.exports = {
+    // Initialize user variable from users.json
     users: (function() {
         log.verbose("users()");
         try {
@@ -22,7 +24,7 @@ var userUtils = module.exports = {
             request.get(requestUrl, function(err, res, body) {
                 if (!err && res.statusCode == 200) {
                     var user = JSON.parse(body);
-                    if (false /*user.exp < Date.now() + 5000*/) { //DISABLE EXPIRES
+                    if (false /*user.exp < Date.now() + 5000*/ ) { //DISABLE EXPIRES
                         callback(new Error("UserToken Has Expired"));
                     } else {
                         if (user.iss.startsWith("https://accounts.google.com") || user.iss.startsWith("accounts.google.com")) {
@@ -52,29 +54,6 @@ var userUtils = module.exports = {
             });
         }
     },
-    initUsers: function(callback) {
-        log.verbose("initUsers(" + typeof callback + ")");
-        if (callback == undefined || typeof callback !== "function") {
-            callback = function(err, users) {
-                return true;
-            }
-        }
-        fs.readFile(__dirname + "/../private/users.json", "utf-8", function(err, data) {
-            if (err) {
-                callback(err);
-            } else {
-                try {
-                    var users = JSON.parse(data);
-                    this.users = users;
-                    callback(undefined, users);
-                } catch (e) {
-					this.users = [];
-                    callback(e);
-					// callback(undefined, this.users);
-                }
-            }
-        });
-    },
     updateUsers: function(callback) {
         // log.verbose("updateUsers(" + typeof callback + ")");
         if (callback == undefined || typeof callback !== "function") {
@@ -87,35 +66,36 @@ var userUtils = module.exports = {
         });
     },
     saveUsers: function(callback) {
+        // log.verbose("saveUsers(" + typeof callback + ")");
         this.updateUsers(callback);
     },
     backupUsers: function(callback) {
         log.verbose("backupUsers(" + typeof callback + ")");
         var dir = __dirname + "/../private/backups/" + format('isoDate') + "/",
             file = format(new Date(), 'HH_MM_ss') + ".json";
-		if (this.users == [] || this.users == "") {
-			callback(new Error("User File Empty"));
-		} else {
-			fs.readdir(dir, function(err, files) {
-	            if (err) {
-	                fs.mkdir(dir, function(err) {
-	                    if (err) {
-	                        callback(err);
-	                    } else {
-	                        fs.writeFile(dir + file, JSON.stringify(userUtils.users), "utf-8", function(err) {
-	                            if (err)
-	                                callback(err);
-	                        });
-	                    }
-	                });
-	            } else {
-	                fs.writeFile(dir + file, JSON.stringify(userUtils.users), "utf-8", function(err) {
-	                    if (err)
-	                        callback(err);
-	                });
-	            }
-	        });
-		}
+        if (this.users == [] || this.users == "") {
+            callback(new Error("User File Empty"));
+        } else {
+            fs.readdir(dir, function(err, files) {
+                if (err) {
+                    fs.mkdir(dir, function(err) {
+                        if (err) {
+                            callback(err);
+                        } else {
+                            fs.writeFile(dir + file, JSON.stringify(userUtils.users), "utf-8", function(err) {
+                                if (err)
+                                    callback(err);
+                            });
+                        }
+                    });
+                } else {
+                    fs.writeFile(dir + file, JSON.stringify(userUtils.users), "utf-8", function(err) {
+                        if (err)
+                            callback(err);
+                    });
+                }
+            });
+        }
     },
     getUsers: function(callback) {
         log.verbose("getUsers(" + typeof callback + ")");
@@ -131,19 +111,19 @@ var userUtils = module.exports = {
         return this.users;
     },
     getUser: function(subid, callback) {
-		log.verbose("getUser(" + subid + ", " + typeof callback + ")");
+        log.verbose("getUser(" + subid + ", " + typeof callback + ")");
         if (typeof callback == "function") {
-			var user = undefined;
+            var user = undefined;
             this.users.forEach(function(u, i) {
                 if (u.subid == subid) {
-	                user = u;
+                    user = u;
                 }
             });
-			if (user) {
-				callback(undefined, user);
-			} else {
-				callback(new Error("User Not Found"));
-			}
+            if (user) {
+                callback(undefined, user);
+            } else {
+                callback(new Error("User Not Found"));
+            }
         }
     },
     getUserSync: function(subid) {
@@ -156,19 +136,19 @@ var userUtils = module.exports = {
         });
         return r;
     },
-	getGoogleUser: function(subid, callback) {
-		log.verbose("getGoogleUser(" + subid + ", " + typeof callback + ")");
-		var API_KEY = "AIzaSyDQhrNxeNTp-uONV9fUuElCylSQF2MHMtI";
-		var baseUrl = "https://www.googleapis.com/plus/v1/people/" + subid + "?key=" + API_KEY;
-		request.get(baseUrl, function(err, res, body) {
-			if (err) {
-				callback(err);
-			} else {
-				var data = JSON.parse(body);
-				callback(undefined, data);
-			}
-		});
-	},
+    getGoogleUser: function(subid, callback) {
+        log.verbose("getGoogleUser(" + subid + ", " + typeof callback + ")");
+        var API_KEY = "AIzaSyDQhrNxeNTp-uONV9fUuElCylSQF2MHMtI";
+        var baseUrl = "https://www.googleapis.com/plus/v1/people/" + subid + "?key=" + API_KEY;
+        request.get(baseUrl, function(err, res, body) {
+            if (err) {
+                callback(err);
+            } else {
+                var data = JSON.parse(body);
+                callback(undefined, data);
+            }
+        });
+    },
     userExists: function(subid, callback) {
         log.verbose("userExists(" + subid + ", " + typeof callback + ")");
         this.getUser(subid, function(err, user) {
@@ -204,7 +184,7 @@ var userUtils = module.exports = {
                 user = o;
             }
         }
-		log.verbose("setUser(" + subid + ", " + user + ", " + typeof callback + ")");
+        log.verbose("setUser(" + subid + ", " + user + ", " + typeof callback + ")");
         this.users.forEach(function(u, i) {
             if (u.subid == subid) {
                 this.users[i] = user;

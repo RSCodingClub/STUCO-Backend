@@ -4,8 +4,6 @@ var request = require('request');
 module.exports = {
     getDistance: function(lat1, lng1, lat2, lng2) {
         log.verbose("getDistance(" + lat1 + ", " + lng1 + ", " + lat2 + ", " + lng2 + ")");
-        // var lat1 = 38.521131;
-        // var lng1 = -90.493044;
 
         var earthRadius = 6371000; // meters
         var dLat = (lat2 - lat1) * (Math.PI / 180);
@@ -45,11 +43,5 @@ module.exports = {
             finalStr += str;
         }
         return finalStr;
-    },
-    padLeft: function(str, len) {
-        return len > str.length ? (new Array(len - str.length + 1)).join(' ') + str : str;
-    },
-    padRight: function(str, len) {
-        return len > str.length ? str + (new Array(len - str.length + 1)).join(' ') : str;
     }
 };

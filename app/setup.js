@@ -18,16 +18,16 @@ var utils = require(__dirname + '/utils'),
 app.use(morgan('dev'));
 morgan.token('method', function(req, res) {
     var method = req.method,
-		time = "[" + format("isoTime") + "] ",
-		length = 8,
-		space = utils.repeatStr(' ', length - req.method.length),
-		processid = "[" + process.pid + "] ";
+        time = "[" + format("isoTime") + "] ",
+        length = 8,
+        space = utils.repeatStr(' ', length - req.method.length),
+        processid = "[" + process.pid + "] ";
     return time + processid + method + space;
 });
 morgan.token('url', function(req, res) {
     var url = req.originalUrl || req.url,
         length = 40,
-		space = length < url.length ? '' : (utils.repeatStr(' ', length - url.length));
+        space = length < url.length ? '' : (utils.repeatStr(' ', length - url.length));
     return url + space;
 });
 morgan.token('response-time', function(req, res) {
@@ -47,27 +47,3 @@ app.use(bodyParser.json({
 }));
 app.use(methodOverride());
 require(__dirname + "/server")(app);
-
-var killProcess = function(options) {
-    log.info("Closing App, running final processes.");
-    userUtils.saveUsers(function(err) {
-        if (err) {
-            log.error("FAILED TO SAVE USER DATA", err.stack);
-            userUtils.backupUsers(function(err) {
-                log.error("FAILED TO SAVE USER DATA DURING BACKUP", err.stack);
-            });
-        } else {
-            process.exit();
-        }
-    });
-}
-
-process.on('uncaughtException', function(err) {
-    log.error(err.stack);
-    killProcess({
-        exit: false
-    });
-});
-process.on('exit', killProcess);
-process.on('SIGTERM', killProcess);
-process.on('SIGINT', killProcess);
