@@ -5,9 +5,4 @@ module.exports = function(app) {
         // res.send('<html><head><meta name="google-site-verification" content="pirFkTJj7EcnzaStY6ttuG-hHJ2NVceKqBA1Y0lgSRw" /></head></html>');
 		res.send("Hello World!");
     });
-    app.get('/api/leaderboard', function(req, res) {
-        scoreUtils.generateLeaderboard(function(leaderboard) {
-            res.send(leaderboard);
-        });
-    });
 }

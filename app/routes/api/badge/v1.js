@@ -8,7 +8,7 @@ router.get('/getbadge/:bid', function(req, res) {
 	res.send(badgeUtils.getBadge(req.params.bid));
 });
 
-router.get('/getbadges', function(req, res) {
+router.get(['/getbadges', '/badges'], function(req, res) {
 	res.send(badgeUtils.getBadges());
 });
 

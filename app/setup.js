@@ -17,7 +17,9 @@ var utils = require(__dirname + '/utils'),
     badgeUtils = require(__dirname + '/badgeutils'),
     scoreUtils = require(__dirname + '/scoreutils');
 
+// Configure Morgan
 app.use(morgan('dev'));
+// Add spacing for nice logging
 morgan.token('method', function(req, res) {
     var method = req.method,
         time = "[" + format("isoTime") + "] ",
@@ -40,6 +42,8 @@ morgan.token('response-time', function(req, res) {
     var timeLength = 8;
     return ('' + ms).length > timeLength ? ms : utils.repeatStr(' ', timeLength - ('' + ms).length) + ms;
 });
+
+// Setup Parsing Header Data
 app.use(bodyParser.urlencoded({
     extended: 'true'
 }));

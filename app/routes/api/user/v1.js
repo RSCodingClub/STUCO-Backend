@@ -25,25 +25,6 @@ router.get('/getbadges/:subid', function(req, res) {
 	}
 });
 
-router.post('/api/user/testlocation/', function(req, res) {
-	// Within 396.24 meters of 38.5175715,-90.4938848
-	// 38.521131;, -90.493044
-	// Test if a point is in a circle
-	// (x - center_x)^2 + (y - center_y)^2 < radius^2
-	var lat1 = 38.521131;
-	var lng1 = -90.493044;
-	var dist = Utils.getDistance(lat1, lng1, req.body.latitiude, req.body.longitude);
-
-	var schoolRadius = 396.24;
-	if (dist + req.body.accuracy < schoolRadius) {
-		res.send(true);
-	} else if (dist - req.body.accuracy < schoolRadius) {
-		res.send(true);
-	} else {
-		res.send(false);
-	}
-});
-
 router.get('/api/user/atevent/:subid/:eid', function(req, res) {
 	res.send(eventUtils.already(req.params.subid, req.params.eid).toString());
 });
@@ -84,6 +65,12 @@ router.post('/api/user/login', function(req, res) {
 			}
 		});
 	}
+});
+
+router.get('/leaderboard', function(req, res) {
+	scoreUtils.generateLeaderboard(function(leaderboard) {
+		res.send(leaderboard);
+	});
 });
 
 module.exports = router;
