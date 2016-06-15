@@ -7,7 +7,8 @@ var badgeUtils = require(__dirname + '/badgeutils');
 
 var ACCEPTABLE_RADIUS = 400;
 
-module.exports = {
+var eventUtils = module.exports = {
+    eventTypes: ["basketball", "soccer", "football", "theatre", "band", "homecoming", "peprally"],
     getEventCalendar: function(callback) {
         log.verbose("getEventCalendar(" + typeof callback + ")");
         var API_KEY = "AIzaSyDQhrNxeNTp-uONV9fUuElCylSQF2MHMtI",
@@ -31,6 +32,7 @@ module.exports = {
                 data.items.forEach(function(e, i) {
                     e.score = Math.round(Math.random() * 10); // TEMP BADGE AND SCORE HOLDERS
                     e.badge = 2; // TEMP BADGE AND SCORE HOLDERS
+                    e.type = eventUtils.eventTypes[Math.round(Math.random() * eventUtils.eventTypes.length)];
                     data.items[i] = e;
                 });
                 callback(undefined, data.items);
@@ -122,7 +124,14 @@ module.exports = {
                     if (err) {
                         callback(err);
                     } else {
-                        callback(undefined, user);
+                        // Badge for attending an event
+                        badgeUtils.giveBadge(subid, 1, function(err, user) {
+                            if (err) {
+                                callback(err);
+                            } else {
+                                callback(undefined, user);
+                            }
+                        });
                     }
                 });
             });

@@ -12,6 +12,7 @@
     "body-parser": "^1.15.0",
     "dateformat": "^1.0.12",
     "express": "^4.13.4",
+    "github": "^1.1.2",
     "googleapis": "^7.1.0",
     "log-util": "~1.1.1",
     "method-override": "^2.3.5",

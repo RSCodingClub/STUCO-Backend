@@ -1,6 +1,6 @@
 var fs = require('fs');
-var userUtils = require(__dirname + "/userutils");
-var scoreUtils = require(__dirname + "/scoreutils");
+var userUtils = require(global.DIR + "/userutils");
+var scoreUtils = require(global.DIR + "/scoreutils");
 var log = require('log-util');
 
 var badgeUtils = module.exports = {

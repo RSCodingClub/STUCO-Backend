@@ -24,7 +24,7 @@ var userUtils = module.exports = {
             request.get(requestUrl, function(err, res, body) {
                 if (!err && res.statusCode == 200) {
                     var user = JSON.parse(body);
-                    if (false /*user.exp < Date.now() + 5000*/ ) { //DISABLE EXPIRES
+                    if (user.iat + (3600 * 1000) < Date.now()) {
                         callback(new Error("UserToken Has Expired"));
                     } else {
                         if (user.iss.startsWith("https://accounts.google.com") || user.iss.startsWith("accounts.google.com")) {
@@ -70,9 +70,9 @@ var userUtils = module.exports = {
         this.updateUsers(callback);
     },
     backupUsers: function(callback) {
-		if (typeof callback !== "function") {
-			callback = function(err){};
-		}
+        if (typeof callback !== "function") {
+            callback = function(err) {};
+        }
         log.verbose("backupUsers(" + typeof callback + ")");
         var dir = __dirname + "/../private/backups/" + format('isoDate') + "/",
             file = format(new Date(), 'HH_MM_ss') + ".json";
@@ -168,6 +168,63 @@ var userUtils = module.exports = {
         log.verbose("userExistsSync(" + subid + ")");
         return this.getUserSync(subid) !== undefined;
     },
+    hasPermission: function(subid, permission) {
+        if (this.userExistsSync(subid)) {
+            var matches = [permission];
+            var permArray = permission.split(".");
+            var user = userUtils.getUserSync(subid);
+            permArray.forEach(function(p, i) {
+                permArray[permArray.length - 1] = "*";
+                matches.push(permArray.join("."));
+                permArray.splice(permArray.length - 1, 1);
+            });
+            matches.push("*");
+            var r = false;
+            matches.forEach(function(m, i) {
+                user.permissions.forEach(function(p, q) {
+                    if (m == p) {
+                        r = true;
+                    }
+                });
+            });
+            return r;
+        } else {
+            return false;
+        }
+    },
+    givePermission: function(subid, permission) {
+		if (this.userExistsSync(subid)) {
+			if (this.hasPermission(subid, permission)) {
+				return false;
+			} else {
+				var user = this.getUserSync(subid);
+				user.permissions.push(permission);
+				this.setUser(subid, user);
+				return true;
+			}
+		} else {
+			return false;
+		}
+    },
+	removePermission: function(subid, permission) {
+		if (this.userExistsSync(subid)) {
+			// if (this.hasPermission(subid)) {
+				var user = this.getUserSync(subid),
+					r = false;
+				user.permissions.forEach(function (p, i) {
+					if (p == permission) {
+						user.permissions.splice(i, 1);
+						r = true;
+					}
+				});
+				return r;
+			// } else {
+			// 	return false;
+			// }
+		} else {
+			return false;
+		}
+	},
     setUser: function(s, u, c) {
         var args = arguments,
             callback = c || function(err) {
@@ -188,17 +245,17 @@ var userUtils = module.exports = {
             }
         }
         log.verbose("setUser(" + subid + ", " + user + ", " + typeof callback + ")");
-        this.users.forEach(function(u, i) {
-            if (u.subid == subid) {
-                this.users[i] = user;
-                r = true;
-            }
-        });
-        if (r == false) {
-            callback(new Error("User Not Found"));
-        } else if (r == true) {
-            callback(undefined, user);
+        if (this.userExistsSync(subid)) {
+            this.users.forEach(function(u, i) {
+                if (u.subid == subid) {
+                    userUtils.users[i] = user;
+                }
+            });
+        } else {
+            this.users.push(user);
         }
+        this.updateUsers();
+        callback(undefined, user);
     },
     createUser: function(subid, nickname, callback) {
         log.verbose("createUser(" + subid + ", " + nickname + ", " + typeof callback + ")");
@@ -207,14 +264,21 @@ var userUtils = module.exports = {
             nickname: nickname,
             badges: [],
             scores: [],
-            settings: {}
+            settings: {},
+            permissions: ["user.view.public"] // TODO Default permissions
         };
-        userUtils.users.push(user);
-        require(__dirname + '/badgeutils').giveBadge(subid, 0, function(err) {
+        //userUtils.users.push(user);
+        this.setUser(subid, user, function(err, user) {
             if (err) {
                 callback(err)
             } else {
-                callback(undefined, user);
+                require(global.DIR + '/badgeutils').giveBadge(subid, 0, function(err) {
+                    if (err) {
+                        callback(err)
+                    } else {
+                        callback(undefined, user);
+                    }
+                });
             }
         });
     }

@@ -14,8 +14,15 @@ module.exports = {
                 eid: eid
             };
             user.scores.push(score);
-            console.log("SCORES", score);
             userUtils.setUser(subid, user);
+			// Badge for 50 points
+			if (this.getScore(subid) >= 50) {
+				require(global.DIR + '/badgeutils').giveBadge(subid, 22);
+			}
+			// Badge for 100 points
+			if (this.getScore(subid) >= 100) {
+				require(global.DIR + '/badgeutils').giveBadge(subid, 29);
+			}
         } else {
             return new Error("User Not Found");
         }

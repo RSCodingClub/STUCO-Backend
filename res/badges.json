@@ -1,26 +1,181 @@
 [{
     "name": "Newb",
-    "desc": "“You signed up. Good for you.”",
-	"earn": "Earn one point by completing the signup process",
-    "reward": 5
+    "desc": "You signed up. Good for you.",
+    "earn": "Earn one point by completing the signup process",
+    "reward": 1,
+    "id": 0
 }, {
     "name": "Visitor Pass",
-    "desc": "“Are you new here?”",
-	"earn": "Go to your first event",
-    "reward": 10
-},{
+    "desc": "Are you new here?",
+    "earn": "Go to your first event",
+    "reward": 10,
+    "id": 1
+}, {
     "name": "C for Effort",
-    "desc": "“#Loser”",
-	"earn": "Don’t show up to an event you said you would be at.",
-    "reward": -5
-},{
+    "desc": "#Loser",
+    "earn": "Don’t show up to an event you said you would be at.",
+    "reward": -5,
+    "id": 2
+}, {
     "name": "Following the Leader",
-    "desc": "“Movin’ up”",
-	"earn": "Check the leaderboard for the first time",
-    "reward": 5
-},{
+    "desc": "Movin’ up",
+    "earn": "Check the leaderboard for the first time",
+    "reward": 5,
+    "id": 3
+}, {
     "name": "McFly",
-    "desc": "“Go home Marty.”",
-	"earn": "Sign up for two events scheduled at the same time.",
-    "reward": 0
+    "desc": "Go home Marty.”",
+    "earn": "Sign up for two events scheduled at the same time.",
+    "reward": 0,
+    "id": 4
+}, {
+    "name": "Basket",
+    "desc": "Swish",
+    "earn": "Go to a basketball game",
+    "reward": 5,
+    "id": 5
+}, {
+    "name": "Splish",
+    "desc": "Splash",
+    "earn": "Go to a Swim Meet",
+    "reward": 5,
+    "id": 6
+}, {
+    "name": "Touchdown",
+    "desc": "42, 13, apple pie, HUT!",
+    "earn": "Go to a Football Game",
+    "reward": 5,
+    "id": 7
+}, {
+    "name": "Steeerike one!",
+    "desc": "Batter Up!",
+    "earn": "Go to a Baseball Game",
+    "reward": 5,
+    "id": 8
+}, {
+    "name": "Bop",
+    "desc": "Ow.",
+    "earn": "Go to a Vollyball Game",
+    "reward": 5,
+    "id": 9
+}, {
+    "name": "Dead Last",
+    "desc": "Tripped, didn't you?",
+    "earn": "Go to a Track Meet",
+    "reward": 5,
+    "id": 10
+}, {
+    "name": "026 Newb",
+    "desc": "GOAL!",
+    "earn": "Go to a Soccer Game",
+    "reward": 5,
+    "id": 11
+}, {
+    "name": "Hockey on Grass",
+    "desc": "Why is this hockey?",
+    "earn": "Go to a Field Hockey game",
+    "reward": 5,
+    "id": 12
+}, {
+    "name": "Just Lax",
+    "desc": "Is this safe?",
+    "earn": "Go to a Lacrosse Game",
+    "reward": 5,
+    "id": 13
+}, {
+    "name": "Jazz Newb",
+    "desc": "Toot",
+    "earn": "Go to a Band Concert",
+    "reward": 5,
+    "id": 14
+}, {
+    "name": "String Bean",
+    "desc": "*High pitched screeching*",
+    "earn": "Go to an Orchestra Concert",
+    "reward": 5,
+    "id": 15
+}, {
+    "name": "Do, Ray, Me~",
+    "desc": "Fa, La, La",
+    "earn": "Go to a Choir Concert",
+    "reward": 5,
+    "id": 16
+}, {
+    "name": "To Be or Not to Be-",
+    "desc": "That's not the question.",
+    "earn": "Go to School Play",
+    "reward": 5,
+    "id": 17
+}, {
+    "name": "Broadway",
+    "desc": "Wicked",
+    "earn": "Go to Musical",
+    "reward": 5,
+    "id": 18
+}, {
+    "name": "The Mona Lisa",
+    "desc": "Do you even DaVinci?",
+    "earn": "Go to Art Fair",
+    "reward": 5,
+    "id": 19
+}, {
+    "name": "Rah",
+    "desc": "Rah",
+    "earn": "Go to Pep Rally",
+    "reward": 20,
+    "id": 20
+}, {
+    "name": "Smack",
+    "desc": "It's like ping pong, but larger.",
+    "earn": "Go to Tennis Match",
+    "reward": 5,
+    "id": 21
+}, {
+    "name": "Score",
+    "desc": "SCORE!",
+    "earn": "Reach 50 points",
+    "reward": 0,
+    "id": 22
+}, {
+    "name": "Homecoming",
+    "desc": "This year I will be royalty",
+    "earn": "Go to homecoming",
+    "reward": 25,
+    "id": 23
+}, {
+    "name": "Cool Kids Club",
+    "desc": "Being a nerd is cool",
+    "earn": "Help develop the app",
+    "reward": 10,
+    "id": 24
+}, {
+    "name": "Early Bird",
+    "desc": "Figuring out the kinks in the app",
+    "earn": "Beta test the app",
+    "reward": 10,
+    "id": 25
+}, {
+    "name": "Bug Squasher",
+    "desc": "Making the app a better place",
+    "earn": "Submit a bug report",
+    "reward": 20,
+    "id": 26
+}, {
+    "name": "Fly Swatter",
+    "desc": "Swatting bugs like nothing",
+    "earn": "Have a bug report approved and fixed",
+    "reward": 25,
+    "id": 27
+}, {
+    "name": "Bug Zapper",
+    "desc": "Bzzpt",
+    "earn": "Successfully catch 5 bugs",
+    "reward": 50,
+    "id": 28
+}, {
+	"name": "Triple Digits",
+    "desc": "Benjamins",
+    "earn": "Reach 100 points",
+    "reward": 0,
+    "id": 29
 }]

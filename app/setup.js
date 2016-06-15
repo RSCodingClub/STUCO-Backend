@@ -12,13 +12,16 @@ log.setDateFormat("HH:MM:ss");
 
 global.DIR = __dirname;
 
-var utils = require(__dirname + '/utils'),
-    userUtils = require(__dirname + '/userutils'),
-    badgeUtils = require(__dirname + '/badgeutils'),
-    scoreUtils = require(__dirname + '/scoreutils');
+var utils = require(__dirname + '/utils');
 
 // Configure Morgan
-app.use(morgan('dev'));
+app.use(morgan('dev', {
+    skip: function(req, res) {
+        if (req.url == '/api/csgo' && req.method == "POST") {
+            return true;
+        }
+    }
+}));
 // Add spacing for nice logging
 morgan.token('method', function(req, res) {
     var method = req.method,
@@ -37,8 +40,7 @@ morgan.token('url', function(req, res) {
 morgan.token('response-time', function(req, res) {
     if (!res._header || !req._startAt) return '';
     var diff = process.hrtime(req._startAt);
-    var ms = diff[0] * 1e3 + diff[1] * 1e-6;
-    ms = ms.toFixed(3);
+    var ms = (diff[0] * 1e3 + diff[1] * 1e-6).toFixed(3);
     var timeLength = 8;
     return ('' + ms).length > timeLength ? ms : utils.repeatStr(' ', timeLength - ('' + ms).length) + ms;
 });
@@ -52,4 +54,13 @@ app.use(bodyParser.json({
     type: 'application/vnd.api+json'
 }));
 app.use(methodOverride());
+
+// Setup static files
+app.use(express.static(global.DIR + '/../res'));
+app.use('/res', function(req, res, next) {
+	res.setHeader("Cache-Control", "max-age=86400");
+	next();
+});
+
+// Initialize the server
 require(__dirname + "/server")(app);
