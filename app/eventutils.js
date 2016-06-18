@@ -67,7 +67,6 @@ var eventUtils = module.exports = {
         if (typeof callback == "function") {
             this.getEvent(eid, function(err, eventdata) {
                 if (err) {
-                    res.statusCode = 400;
                     callback(err);
                 } else {
                     var start = new Date(eventdata.start.dateTime).getTime();

@@ -169,6 +169,7 @@ var userUtils = module.exports = {
         return this.getUserSync(subid) !== undefined;
     },
     hasPermission: function(subid, permission) {
+		log.verbose("hasPermission(" + subid + ", " + permission + ")");
         if (this.userExistsSync(subid)) {
             var matches = [permission];
             var permArray = permission.split(".");
@@ -193,6 +194,7 @@ var userUtils = module.exports = {
         }
     },
     givePermission: function(subid, permission) {
+		log.verbose("givePermission(" + subid + ", " + permission + ")");
 		if (this.userExistsSync(subid)) {
 			if (this.hasPermission(subid, permission)) {
 				return false;
@@ -207,6 +209,7 @@ var userUtils = module.exports = {
 		}
     },
 	removePermission: function(subid, permission) {
+		log.verbose("removePermission(" + subid + ", " + permission + ")");
 		if (this.userExistsSync(subid)) {
 			// if (this.hasPermission(subid)) {
 				var user = this.getUserSync(subid),

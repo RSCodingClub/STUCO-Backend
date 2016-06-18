@@ -35,6 +35,32 @@ router.post(['/user/users', '/user/getusers'], function(req, res) {
     });
 });
 
+router.post(['/user/score/change/:subid', '/user/score/modify/:subid'], function(req, res) {
+	// [usertoken, score]
+    userUtils.verifyToken(req.body.usertoken, function(err, user) {
+        if (err) {
+            res.send({
+                error: err.message
+            });
+        } else {
+            if (userUtils.hasPermission(user.sub, "user.score.modify")) {
+                if (userUtils.userExistsSync(req.params.subid)) {
+					scoreUtils.givePointsSync(req.params.subid, "admin", req.body.score);
+                    // res.send(userUtils.getUserSync(req.params.subid));
+                } else {
+                    res.send({
+                        error: new Error("User Not Found").message
+                    });
+                }
+            } else {
+                res.send({
+                    error: new Error("Permission Requirements Not Met").message
+                });
+            }
+        }
+    });
+});
+
 router.post(['/user/:subid', '/user/getuser/:subid'], function(req, res) {
 	// [usertoken]
     userUtils.verifyToken(req.body.usertoken, function(err, user) {
@@ -131,6 +157,12 @@ router.post(['/permissions/take', '/permissions/remove', '/permissions/revoke'],
             }
         }
     });
+});
+
+router.post(['/badge/add/:bid', '/badge/create/:bid'], function(req, res) {
+	// [usertoken]
+	res.statusCode = 500;
+	res.send("Feature Temporarily Disabled.");
 });
 
 module.exports = router;
