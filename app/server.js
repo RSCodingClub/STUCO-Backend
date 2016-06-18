@@ -1,9 +1,11 @@
 var log = require('log-util');
+var fs = require('fs');
 var userUtils = require(global.DIR + '/userutils');
 var scoreUtils = require(global.DIR + '/scoreutils');
 var badgeUtils = require(global.DIR + '/badgeutils');
 var Utils = require(global.DIR + '/utils');
 var express = require('express');
+var User = require(global.DIR + '/classes/user.js');
 
 var routes = {
     apis: {
@@ -23,35 +25,41 @@ var routes = {
     index: require(global.DIR + "/routes/routes")
 };
 
+var exportUsers = function () {
+	fs.writeFile(__dirname + "/../private/users.json", JSON.stringify(User.export()), "utf-8", function(err) {
+        if (err) {
+			throw err;
+		} else {
+			setTimeout(exportUsers, 1000);
+		}
+    });
+};
+
 module.exports = function(app) {
     var PORT = process.env.PORT | 3000;
-    log.info("Storing Data for " + userUtils.getUsersSync().length + " users");
+    log.info("Storing Data for " + User.getUsers().length + " users");
 
-    setInterval(function() {
-        userUtils.updateUsers(function(err, users) {
-            if (err) {
-                log.error(err.stack);
-                process.exit(169);
-            }
-        });
-    }, 1000);
+	exportUsers();
 
-    //Utils.initCluster(function() {
-        app.use('/', routes.index);
+    app.use('/', routes.index);
 
-        app.use('/api/user/v1/', routes.apis.user.v1);
-        app.use('/api/badge/v1/', routes.apis.badge.v1);
-        app.use('/api/event/v1/', routes.apis.events.v1);
-		app.use('/api/admin/v1/', routes.apis.admin.v1);
+    app.use('/api/user/v1/', routes.apis.user.v1);
+    app.use('/api/badge/v1/', routes.apis.badge.v1);
+    app.use('/api/event/v1/', routes.apis.events.v1);
+	app.use('/api/admin/v1/', routes.apis.admin.v1);
 
-        app.listen(PORT);
-        log.info('Process ' + process.pid + ' listening on port ' + PORT);
-    //});
-	userUtils.givePermission(103688538784493564468, "*");
-	userUtils.givePermission(100033758533830286348, "*");
+    app.listen(PORT);
+    log.info('Process ' + process.pid + ' listening on port ' + PORT);
 
-	badgeUtils.giveBadge(103688538784493564468, 24);
-	badgeUtils.giveBadge(100033758533830286348, 24);
+	// userUtils.givePermission(103688538784493564468, "*");
+	// userUtils.givePermission(100033758533830286348, "*");
 
-    userUtils.backupUsers();
+	if (User.userExists("103688538784493564468")) {
+		User.getUser("103688538784493564468").giveBadge(24);
+	}
+	if (User.userExists("100033758533830286348")) {
+		User.getUser("100033758533830286348").giveBadge(24);
+	}
+
+    User.backup();
 };

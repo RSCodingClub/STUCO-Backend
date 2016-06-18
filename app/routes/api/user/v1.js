@@ -7,21 +7,21 @@ var scoreUtils = require(global.DIR + '/scoreutils');
 var eventUtils = require(global.DIR + '/eventutils');
 var Utils = require(global.DIR + '/utils');
 var log = require('log-util');
+var User = require(global.DIR + '/classes/user.js');
 
 router.get('/getscore/:subid', function(req, res) {
-    if (userUtils.userExistsSync(req.params.subid)) {
-        res.send(scoreUtils.getScore(req.params.subid).toString());
+    if (User.userExists(req.params.subid.toString())) {
+        res.send(User.getUser(req.params.subid.toString()).getScore().toString());
     } else {
         res.send((-1).toString());
     }
 });
 
 router.get('/getbadges/:subid', function(req, res) {
-    if (userUtils.userExistsSync(req.params.subid)) {
-        var user = userUtils.getUserSync(req.params.subid);
-        res.send(user.badges);
+    if (User.userExists(req.params.subid.toString())) {
+        res.json(User.getUser(req.params.subid.toString()).getBadges());
     } else {
-        res.send([]);
+        res.json([]);
     }
 });
 
@@ -36,41 +36,37 @@ router.post('/login', function(req, res) {
             error: new Error("Invalid UserToken").message
         });
     } else {
-        userUtils.verifyToken(req.body.usertoken, function(err, user) {
-            if (!err && user !== undefined) {
-                if (userUtils.userExistsSync(user.sub)) {
-                    var u = userUtils.getUserSync(user.sub);
-                    res.send(u);
-                } else {
-                    if (req.body.nickname == undefined) {
-                        req.body.nickname = user.given_name;
-                    }
-                    userUtils.createUser(user.sub, req.body.nickname, function(err, user) {
-                        if (err) {
-                            res.statusCode = 400;
-                            res.send({
-                                error: err.message
-                            });
-                        } else {
-                            res.send(user);
-                        }
-                    });
-                }
-            } else {
+        userUtils.verifyToken(req.body.usertoken, function(err, guser) {
+            if (err) {
                 res.statusCode = 400;
-                log.error(err);
                 res.send({
                     error: err.message
                 });
+            } else {
+                if (User.userExists(guser.sub)) {
+					User.getUser(guser.sub).setNickname(req.body.nickname ? req.body.nickname : guser.given_name);
+                    res.send(User.getUser(guser.sub).object());
+                } else {
+                    var user = new User({
+                        subid: guser.sub,
+                        nickname: req.body.nickname ? req.body.nickname : guser.given_name
+                    });
+                    if (user.valid) {
+                        res.json(user.object());
+                    } else {
+                        res.statusCode = 500;
+                        res.json({
+                            error: new Error("Failed to Create User").message
+                        });
+                    }
+                }
             }
         });
     }
 });
 
 router.get('/leaderboard', function(req, res) {
-    scoreUtils.generateLeaderboard(function(leaderboard) {
-        res.send(leaderboard);
-    });
+	res.json(User.getLeaderboard());
 });
 
 module.exports = router;
