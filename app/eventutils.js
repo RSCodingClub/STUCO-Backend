@@ -72,25 +72,25 @@ var eventUtils = module.exports = {
                     var start = new Date(eventdata.start.dateTime).getTime();
                     var end = new Date(eventdata.end.dateTime).getTime();
 
-                    //if (start < Date.now() && end > Date.now()) {
-                    var address = eventdata.location;
-                    Utils.getLocationFromAddress(address, function(err, location) {
-                        if (err) {
-                            callback(err);
-                        } else {
-                            var dist = Utils.getDistance(location.lat, location.lng, lat, lng);
-                            if (dist + acc < ACCEPTABLE_RADIUS) {
-                                callback(undefined, true);
-                            } else if (dist - acc < ACCEPTABLE_RADIUS) {
-                                callback(undefined, true);
+                    if (start < Date.now() && end > Date.now()) {
+                        var address = eventdata.location;
+                        Utils.getLocationFromAddress(address, function(err, location) {
+                            if (err) {
+                                callback(err);
                             } else {
-                                callback(undefined, false);
+                                var dist = Utils.getDistance(location.lat, location.lng, lat, lng);
+                                if (dist + acc < ACCEPTABLE_RADIUS) {
+                                    callback(undefined, true);
+                                } else if (dist - acc < ACCEPTABLE_RADIUS) {
+                                    callback(undefined, true);
+                                } else {
+                                    callback(undefined, false);
+                                }
                             }
-                        }
-                    });
-                    //    } else {
-                    //        callback(new Error("Timeframe Error, Not On Time"));
-                    //    }
+                        });
+                    } else {
+                        callback(new Error("Not On Time to Event"));
+                    }
                 }
             });
         } else {

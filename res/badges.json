@@ -178,4 +178,10 @@
     "earn": "Reach 100 points",
     "reward": 0,
     "id": 29
+}, {
+	"name": "Teacher",
+    "desc": "Do you work here?",
+    "earn": "Be a teacher",
+    "reward": 0,
+    "id": 30
 }]
