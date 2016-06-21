@@ -1,5 +1,5 @@
 var format = require('dateformat'),
-	fs = require('fs'),
+    fs = require('fs'),
     path = require('path'),
     morgan = require('morgan'),
     bodyParser = require('body-parser'),
@@ -11,7 +11,13 @@ var format = require('dateformat'),
 log.setLevel(log.Log.VERBOSE);
 log.setDateFormat("HH:MM:ss");
 
-global.DIR = __dirname;
+global.DIR 			= __dirname;
+global.API_KEY		= "AIzaSyDQhrNxeNTp-uONV9fUuElCylSQF2MHMtI";
+global.CALENDAR_ID 	= "bcervcjfb5q5niuunqbcjk9iig@group.calendar.google.com"; //"d7qc2o4as3tspi1k9617pdjvho@group.calendar.google.com"; //"rsdmo.org_39313733373631393232@resource.calendar.google.com";
+global.ACCEPTABLE_RADIUS = 400;
+global.MAX_ACC 		= 50;
+
+global.ERR_CODES = JSON.parse(fs.readFileSync(global.DIR + '/../private/errorcodes.json'));
 
 var userUtils = require(global.DIR + '/userutils');
 var scoreUtils = require(global.DIR + '/scoreutils');
@@ -69,8 +75,14 @@ app.use('/res', function(req, res, next) {
 });
 
 // Handle Uncaught Exceptions
-process.on('uncaughtException', function (err) {
-	fs.writeFileSync(__dirname + "/../private/users.json", JSON.stringify(User.export()), "utf-8");
+process.on('uncaughtException', function(err) {
+	log.error(err.stack);
+    fs.writeFileSync(__dirname + "/../private/users.json", JSON.stringify(User.export()), "utf-8");
+});
+
+// Handle Warnings
+process.on('warning', (warning) => {
+	log.warn(warning);
 });
 
 // Initialize the server

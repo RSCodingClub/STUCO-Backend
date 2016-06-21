@@ -17,6 +17,7 @@
     "log-util": "~1.1.1",
     "method-override": "^2.3.5",
     "morgan": "^1.7.0",
-    "request": "^2.72.0"
+    "request": "^2.72.0",
+    "validator": "^5.4.0"
   }
 }

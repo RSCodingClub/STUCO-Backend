@@ -45,13 +45,17 @@ router.post('/login', function(req, res) {
             } else {
                 if (User.userExists(guser.sub)) {
 					User.getUser(guser.sub).setNickname(req.body.nickname ? req.body.nickname : guser.given_name);
+					User.getUser(guser.sub).setName(guser.name);
                     res.send(User.getUser(guser.sub).object());
                 } else {
                     var user = new User({
                         subid: guser.sub,
-                        nickname: req.body.nickname ? req.body.nickname : guser.given_name
+						name: guser.name,
+                        nickname: req.body.nickname ? req.body.nickname : guser.given_name,
+						email: guser.email
                     });
                     if (user.valid) {
+						user.giveBadge(0);
                         res.json(user.object());
                     } else {
                         res.statusCode = 500;

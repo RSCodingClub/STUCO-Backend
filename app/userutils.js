@@ -7,6 +7,7 @@ var format = require('dateformat');
 var userUtils = module.exports = {
     // Initialize user variable from users.json
     users: (function() {
+		process.emitWarning('This API is deprecated', 'DeprecationWarning');
         log.verbose("users()");
         try {
             return JSON.parse(fs.readFileSync(__dirname + "/../private/users.json"));
@@ -260,29 +261,29 @@ var userUtils = module.exports = {
         this.updateUsers();
         callback(undefined, user);
     },
-    createUser: function(subid, nickname, callback) {
-        log.verbose("createUser(" + subid + ", " + nickname + ", " + typeof callback + ")");
-        var user = {
-            subid: subid,
-            nickname: nickname,
-            badges: [],
-            scores: [],
-            settings: {},
-            permissions: ["user.view.public"] // TODO Default permissions
-        };
-        //userUtils.users.push(user);
-        this.setUser(subid, user, function(err, user) {
-            if (err) {
-                callback(err)
-            } else {
-                require(global.DIR + '/badgeutils').giveBadge(subid, 0, function(err) {
-                    if (err) {
-                        callback(err)
-                    } else {
-                        callback(undefined, user);
-                    }
-                });
-            }
-        });
-    }
+    // createUser: function(subid, nickname, callback) {
+    //     log.verbose("createUser(" + subid + ", " + nickname + ", " + typeof callback + ")");
+    //     var user = {
+    //         subid: subid,
+    //         nickname: nickname,
+    //         badges: [],
+    //         scores: [],
+    //         settings: {},
+    //         permissions: ["user.view.public"]
+    //     };
+    //     //userUtils.users.push(user);
+    //     this.setUser(subid, user, function(err, user) {
+    //         if (err) {
+    //             callback(err)
+    //         } else {
+    //             require(global.DIR + '/badgeutils').giveBadge(subid, 0, function(err) {
+    //                 if (err) {
+    //                     callback(err)
+    //                 } else {
+    //                     callback(undefined, user);
+    //                 }
+    //             });
+    //         }
+    //     });
+    // }
 };

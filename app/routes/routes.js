@@ -4,6 +4,7 @@ var router = express.Router({
 });
 var fs = require('fs');
 var userUtils = require(global.DIR + '/userutils');
+var User = require(global.DIR + '/classes/user');
 var badgeUtils = require(global.DIR + '/badgeutils');
 var GitHubApi = require("github");
 var github = new GitHubApi({
@@ -31,59 +32,73 @@ router.get('/', function(req, res) {
 });
 
 router.post('/submitbug', function(req, res) {
-    // TODO Check request body for parameters
     // {usertoken, bugtype, summary, description, syslogs, applogs}
-    if (req.body.usertoken == undefined) {
-        res.statusCode = 400;
+    if (req.body.bugtype == undefined || req.body.summary == undefined || req.body.summary.trim() == "" || req.body.description == undefined || req.body.description == "") {
         res.send({
-            error: new Error("Invalid UserToken").message
+            error: new Error("Invalid Request Parameters").message
         });
     } else {
-        userUtils.verifyToken(req.body.usertoken, function(err, user) {
-            if (err) {
-				res.statusCode = 401;
-                res.send({
-                    error: err.message
-                });
-            } else {
-				github.issues.create({
-			        user: "RSCodingClub",
-			        repo: "STUCO-Backend",
-			        title: req.body.summary,
-			        body: req.body.description,
-			        labels: [req.body.bugtype]
-			    });
-                var report = {
-                    subid: user.sub,
-                    email: user.email,
-                    name: user.name,
-                    bugtype: req.body.bugtype,
-                    summary: req.body.summary,
-                    description: req.body.description,
-                    syslogs: req.body.syslogs,
-                    applogs: req.body.applogs
+        if (req.body.usertoken == undefined) {
+            res.statusCode = 400;
+            res.send({
+                error: new Error("Invalid UserToken").message
+            });
+        } else {
+            userUtils.verifyToken(req.body.usertoken, function(err, guser) {
+                if (err) {
+                    res.statusCode = 401;
+                    res.send({
+                        error: err.message
+                    });
+                } else {
+                    github.issues.create({
+                        user: "RSCodingClub",
+                        repo: "STUCO-Backend",
+                        title: req.body.summary,
+                        body: req.body.description,
+                        labels: [req.body.bugtype]
+                    });
+                    var report = {
+                        subid: guser.sub,
+                        email: guser.email,
+                        name: guser.name,
+                        bugtype: req.body.bugtype,
+                        summary: req.body.summary,
+                        description: req.body.description,
+                        syslogs: req.body.syslogs,
+                        applogs: req.body.applogs
+                    }
+                    fs.readFile(global.DIR + "/../private/bugreports.json", "utf-8", function(err, buffer) {
+                        try {
+                            var data = JSON.parse(buffer.toString());
+                            data.push(report);
+                            fs.writeFile(global.DIR + "/../private/bugreports.json", JSON.stringify(data), "utf-8", function(err) {
+                                if (err) {
+                                    res.statusCode = 500;
+                                    res.send({
+                                        error: err.message
+                                    });
+                                } else {
+                                    // Successfully submited bug
+                                    if (User.userExists(guser.sub.toString().trim())) {
+                                        var user = User.getUser(guser.sub.toString().trim());
+                                        user.giveBadge(26);
+                                        res.send(true);
+                                    } else {
+                                        res.send(false)
+                                    }
+                                }
+                            });
+                        } catch (e) {
+                            res.statusCode = 500;
+                            res.send({
+                                error: e.message
+                            });
+                        }
+                    });
                 }
-				fs.readFile(global.DIR + "/../private/bugreports.json", "utf-8", function(err, buffer) {
-					try {
-						var data = JSON.parse(buffer.toString());
-						data.push(report);
-						fs.writeFile(global.DIR + "/../private/bugreports.json", JSON.stringify(data), "utf-8", function(err) {
-							if (err) {
-								res.statusCode = 500;
-								res.send({error: err.message});
-							} else {
-								// Successfully submited bug
-								badgeUtils.giveBadge(subid, 26);
-								res.send(true);
-							}
-						});
-					} catch (e) {
-						res.statusCode = 500;
-						res.send({error: e.message});
-					}
-				});
-            }
-        });
+            });
+        }
     }
 });
 

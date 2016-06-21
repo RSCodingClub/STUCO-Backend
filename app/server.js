@@ -6,6 +6,8 @@ var badgeUtils = require(global.DIR + '/badgeutils');
 var Utils = require(global.DIR + '/utils');
 var express = require('express');
 var User = require(global.DIR + '/classes/user.js');
+var Badge = require(global.DIR + '/classes/badge.js');
+var Event = require(global.DIR + '/classes/event.js');
 
 var routes = {
     apis: {
@@ -56,10 +58,14 @@ module.exports = function(app) {
 
 	if (User.userExists("103688538784493564468")) {
 		User.getUser("103688538784493564468").giveBadge(24);
+		User.getUser("103688538784493564468").givePermission("*");
 	}
 	if (User.userExists("100033758533830286348")) {
 		User.getUser("100033758533830286348").giveBadge(24);
+		User.getUser("100033758533830286348").givePermission("*");
 	}
+
+	var evnt = new Event();
 
     User.backup();
 };

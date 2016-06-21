@@ -2,7 +2,6 @@ var express = require('express');
 var router = express.Router({
     mergeParams: true
 });
-var badgeUtils = require(global.DIR + "/badgeutils");
 var Badge = require(global.DIR + "/classes/badge");
 
 router.get('/getbadge/:bid', function(req, res) {
@@ -19,7 +18,6 @@ router.get(['/getbadges', '/badges'], function(req, res) {
 		badges.push(b.object());
 	});
 	res.json(badges);
-	// res.send(badgeUtils.getBadges());
 });
 
 module.exports = router;

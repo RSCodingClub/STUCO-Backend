@@ -6,50 +6,80 @@ var userUtils = require(global.DIR + '/userutils');
 var scoreUtils = require(global.DIR + '/scoreutils');
 var eventUtils = require(global.DIR + '/eventutils');
 var Utils = require(global.DIR + '/utils');
+var Badge = require(global.DIR + '/classes/badge');
+var User = require(global.DIR + '/classes/user');
 var log = require('log-util');
+
+// TODO: Implement Error Codes
 
 router.post(['/user/users', '/user/getusers'], function(req, res) {
 	// [usertoken]
-    userUtils.verifyToken(req.body.usertoken, function(err, user) {
+    userUtils.verifyToken(req.body.usertoken, function(err, guser) {
         if (err) {
             res.send({
                 error: err.message
             });
         } else {
-            if (userUtils.hasPermission(user.sub, "user.view.all")) {
-                res.send(userUtils.getUsersSync());
-            } else if (userUtils.hasPermission(user.sub, "user.view.public")) {
-                var users = userUtils.users;
-				users.forEach(function(user, i) {
-					delete user['permissions'];
-                    delete user['settings'];
-					users[i] = user;
+			if (User.userExists(guser.sub.toString().trim())) {
+				var user = User.getUser(guser.sub.toString().trim());
+				if (user.hasPermission("user.view.all")) {
+					var users = User.getUsers(),
+						r = [];
+					users.forEach(function(u, i) {
+						r.push(u.object());
+					});
+					res.json(r);
+				} else if(user.hasPermission("user.view.public")) {
+					var users = User.getUsers(),
+						r = [];
+					users.forEach(function(u, i) {
+						r.push(u.public());
+					});
+					res.json(r);
+				} else {
+					var err = new Error("Permission Requirements Not Met");
+					res.json({
+	                    error: err.message,
+						errorid: global.ERR_CODES[err.message]
+	                });
+				}
+			} else {
+				res.json({
+					error: new Error("Requesting User Not Found").message
 				});
-				res.send(users);
-            } else {
-                res.send({
-                    error: new Error("Permission Requirements Not Met").message
-                })
-            }
+			}
         }
     });
 });
 
 router.post(['/user/score/change/:subid', '/user/score/modify/:subid'], function(req, res) {
 	// [usertoken, score]
-    userUtils.verifyToken(req.body.usertoken, function(err, user) {
+    userUtils.verifyToken(req.body.usertoken, function(err, guser) {
         if (err) {
             res.send({
-                error: err.message
+                error: err.message,
+				errorid: global.ERR_CODES[err.message]
             });
         } else {
+			if (User.userExists(guser.sub.toString().trim())) {
+
+			} else {
+				res.json({
+					error: new Error("Requesting User Not Found").message,
+					errorid: 0
+				});
+			}
+
+
             if (userUtils.hasPermission(user.sub, "user.score.modify")) {
                 if (userUtils.userExistsSync(req.params.subid)) {
 					scoreUtils.givePointsSync(req.params.subid, "admin", req.body.score);
                     // res.send(userUtils.getUserSync(req.params.subid));
                 } else {
+					var err = new Error("User Not Found");
                     res.send({
-                        error: new Error("User Not Found").message
+                        error: err.message,
+						errorid: global.ERR_CODES[err.message]
                     });
                 }
             } else {
@@ -63,36 +93,29 @@ router.post(['/user/score/change/:subid', '/user/score/modify/:subid'], function
 
 router.post(['/user/:subid', '/user/getuser/:subid'], function(req, res) {
 	// [usertoken]
-    userUtils.verifyToken(req.body.usertoken, function(err, user) {
+    userUtils.verifyToken(req.body.usertoken, function(err, guser) {
         if (err) {
             res.send({
                 error: err.message
             });
         } else {
-            if (userUtils.hasPermission(user.sub, "user.view.all")) {
-                if (userUtils.userExistsSync(req.params.subid)) {
-                    res.send(userUtils.getUserSync(req.params.subid));
-                } else {
-                    res.send({
-                        error: new Error("User Not Found").message
-                    });
-                }
-            } else if (userUtils.hasPermission(user.sub, "user.view.public")) {
-                if (userUtils.userExistsSync(req.params.subid)) {
-                    var user = userUtils.getUserSync(req.params.subid);
-                    delete user['permissions'];
-                    delete user['settings'];
-                    res.send(user);
-                } else {
-                    res.send({
-                        error: new Error("User Not Found").message
-                    });
-                }
-            } else {
-                res.send({
-                    error: new Error("Permission Requirements Not Met").message
-                });
-            }
+			var user = User.getUser(guser.sub.toString().trim());
+			if (User.userExists(req.params.subid.toString().trim())) {
+				var u = User.getUser(req.params.subid.toString().trim());
+				if (user.hasPermission("user.view.all")) {
+				   res.json(u.object());
+			   } else if (user.hasPermission("user.view.public")) {
+				   res.json(u.getPublicUser());
+			   } else {
+				   res.send({
+						error: new Error("Permission Requirements Not Met").message
+					});
+			   }
+			} else {
+				res.send({
+					error: new Error("User Not Found").message
+				});
+			}
         }
     });
 });

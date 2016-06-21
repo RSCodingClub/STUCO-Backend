@@ -47,8 +47,7 @@ module.exports = {
     },
 	initCluster: function(callback) {
 		if (cluster.isMaster) {
-			// TODO CHANGE BACK
-	        var numWorkers = 1; //process.env.THREADS | require('os').cpus().length;
+	        var numWorkers = process.env.THREADS | require('os').cpus().length;
 	        log.debug('Master cluster setting up ' + numWorkers + ' workers...');
 
 	        for (var i = 0; i < numWorkers; i++) {

@@ -1,7 +1,8 @@
-var userUtils = require(global.DIR + '/userutils');
 var Badge = require(global.DIR + '/classes/badge');
 var fs = require('fs');
 var format = require('dateformat');
+var log = require('log-util');
+var validator = require('validator');
 
 var generateUserMap = function(users) {
         var r = {};
@@ -17,6 +18,8 @@ var User = module.exports = function(user) {
     this.subid = "";
     this.valid = false;
     var _nickname = "",
+		_name = "",
+		_email = "",
         _scores = [],
         _badges = [],
         _settings = {},
@@ -27,7 +30,7 @@ var User = module.exports = function(user) {
         if (typeof user == "string" || typeof user == "number") {
             // user is subid return pre existing object
             if (userMap[user] !== undefined) {
-                return userMap[user]; //new User(userUtils.getUserSync(user));
+                return userMap[user];
             } else {
                 this.valid = false;
             }
@@ -44,11 +47,13 @@ var User = module.exports = function(user) {
                 // console.log("Permissions", user.permissions);
 
                 this.subid = user.subid;
-                _nickname = user.nickname;
+                _nickname = validator.escape(encodeURIComponent(user.nickname));
+				_name = user.name ? user.name : "";
+				_email = validator.isEmail(user.email.toString()) ? user.email.toString() : "";
                 _scores = (user.scores) ? user.scores : [];
                 _badges = (user.badges) ? user.badges : [];
                 _settings = (user.settings) ? user.settings : {};
-                _permissions = (user.permissions) ? user.permissions : ["user.view.public"]; // Default Permissions
+                _permissions = (user.permissions) ? user.permissions : ["user.view.public"]; // TODO: Add Default Permissions
                 this.valid = true;
 
                 // console.log("Nickname", _nickname)
@@ -69,12 +74,14 @@ var User = module.exports = function(user) {
 
     // UTILS
     this.toString = function() {
-        return _nickname.toString();
+        return validator.unescape(decodeURIComponent(_nickname)).toString();
     };
     this.object = function() {
         return {
             subid: this.subid,
-            nickname: _nickname,
+            nickname: validator.unescape(decodeURIComponent(_nickname)),
+			name: _name,
+			email: _email,
             scores: _scores,
             badges: _badges,
             settings: _settings,
@@ -84,30 +91,40 @@ var User = module.exports = function(user) {
     this.getPublicUser = function() {
         return {
             subid: this.subid,
-            nickname: _nickname,
+            nickname: validator.unescape(decodeURIComponent(_nickname)),
             score: this.getScore(),
             badges: _badges
         }
     };
-    // TODO FIXME
-    // this.saveUser = function (callback) {
-    // 	userUtils.user
-    // };
 
     // NICKNAME
     this.getNickname = function() {
-        return _nickname;
+        return validator.unescape(decodeURIComponent(_nickname));
     };
     this.setNickname = function(n) {
-        _nickname = n;
+        _nickname = validator.escape(encodeURIComponent(n));
         return true;
+    };
+
+	// NAME
+    this.getName = function() {
+        return _name;
+    };
+    this.setName = function(n) {
+        _name = n;
+        return true;
+    };
+
+	// EMAIL
+	this.getEmail = function() {
+        return _email;
     };
 
     // SCORE
     this.getScores = function() {
         return _scores;
     };
-    this.giveScore = this.givePoints = function(t, v, e) {
+    this.giveScore = function(t, v, e) {
         var score = {
             type: t,
             value: v,
@@ -147,12 +164,13 @@ var User = module.exports = function(user) {
         return _badges;
     };
     this.hasBadge = function(b) {
+		var r = false;
         _badges.forEach(function(o, i) {
-            if (o == b) {
-                return true;
+            if (o.toString() == b.toString().trim()) {
+                r = true;
             }
         });
-        return false;
+        return r;
     };
     this.giveBadge = function(b) {
         if (typeof b == "number") {
@@ -161,7 +179,7 @@ var User = module.exports = function(user) {
             } else {
                 _badges.push(parseInt(b));
                 var badge = Badge.getBadge(b);
-                this.givePoints("badge", badge.getReward());
+                this.giveScore("badge", badge.getReward());
                 return true;
             }
         } else {
@@ -182,6 +200,7 @@ var User = module.exports = function(user) {
     this.getPermissions = function() {
         return _permissions;
     };
+	// FIXME
     this.hasPermission = function(permission) {
         var matches = [permission];
         var permArray = permission.split(".");
@@ -236,6 +255,7 @@ var userData = (function() {
         try {
             return JSON.parse(fs.readFileSync(global.DIR + "/../private/users.json"));
         } catch (e) {
+			// TODO Return last backup if userdata fails to read
             return [];
         }
     })();
