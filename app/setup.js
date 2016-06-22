@@ -8,16 +8,26 @@ var format = require('dateformat'),
     express = require('express'),
     app = express();
 
-log.setLevel(log.Log.VERBOSE);
 log.setDateFormat("HH:MM:ss");
 
 global.DIR 			= __dirname;
-global.API_KEY		= "AIzaSyDQhrNxeNTp-uONV9fUuElCylSQF2MHMtI";
-global.CALENDAR_ID 	= "bcervcjfb5q5niuunqbcjk9iig@group.calendar.google.com"; //"d7qc2o4as3tspi1k9617pdjvho@group.calendar.google.com"; //"rsdmo.org_39313733373631393232@resource.calendar.google.com";
-global.ACCEPTABLE_RADIUS = 400;
-global.MAX_ACC 		= 50;
+global.ENV			= "developement";
 
-global.ERR_CODES = JSON.parse(fs.readFileSync(global.DIR + '/../private/errorcodes.json'));
+global.API_KEY		= "AIzaSyDQhrNxeNTp-uONV9fUuElCylSQF2MHMtI";
+global.CALENDAR_ID 	= "d7qc2o4as3tspi1k9617pdjvho@group.calendar.google.com"; // "bcervcjfb5q5niuunqbcjk9iig@group.calendar.google.com"; //"rsdmo.org_39313733373631393232@resource.calendar.google.com";
+global.ACCEPTABLE_RADIUS = 400;
+global.MAX_ACC 		= 40;
+
+global.ERR_CODES 	= JSON.parse(fs.readFileSync(global.DIR + '/../res/errorcodes.json'));
+global.TZ 			= JSON.parse(fs.readFileSync(global.DIR + '/../res/timezones.json'));
+
+if (global.ENV == "developement") {
+	log.setLevel(log.Log.VERBOSE);
+} else if (global.ENV == "production") {
+	log.setLevel(log.Log.WARN);
+} else {
+	log.setLevel(log.Log.DEBUG);
+}
 
 var userUtils = require(global.DIR + '/userutils');
 var scoreUtils = require(global.DIR + '/scoreutils');
@@ -76,12 +86,14 @@ app.use('/res', function(req, res, next) {
 
 // Handle Uncaught Exceptions
 process.on('uncaughtException', function(err) {
-	log.error(err.stack);
+	log.error("Fatal Error: Exiting Application");
+	log.error(err);
+	// log.error(err.stack);
     fs.writeFileSync(__dirname + "/../private/users.json", JSON.stringify(User.export()), "utf-8");
 });
 
 // Handle Warnings
-process.on('warning', (warning) => {
+process.on('warning', function(warning) {
 	log.warn(warning);
 });
 

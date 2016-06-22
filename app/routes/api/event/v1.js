@@ -12,14 +12,18 @@ router.get(['/events/:limit/:index','/events/:limit', '/events'], function(req, 
 	var events = Event.getEvents();
 	var r = [];
 	events.forEach(function (e, i) {
-		r.push(e.nice());
+		if (req.query.data && req.query.data == "all") {
+			r.push(e.object());
+		} else {
+			r.push(e.nice());
+		}
 	});
 	if (req.params.limit) {
 		if (!req.params.index) {
 			req.params.index = 0;
 		}
 		r.splice(0, req.params.index);
-		r.splice(req.params.limit, r.length)
+		r.splice(req.params.limit, r.length);
 	}
 	res.json(r);
 });
@@ -29,19 +33,17 @@ router.get(['/details/:eid', '/event/:eid'], function(req, res) {
 		var evnt = Event.getEvent(req.params.eid.toString().trim());
 		res.json(evnt.object());
 	} else {
-		res.statusCode = 404;
-		res.send({
-			error: new Error("Event Not Found").message
-		});
+		res.statusCode = 400;
+		var	err = new Error("Event Not Found")
+		res.json(Utils.getErrorObject(err));
 	}
 });
 
 router.post('/onlocation/:eid', function(req, res) {
     if (!req.body.latitude || !req.body.longitude || !req.body.accuracy) {
         res.statusCode = 400;
-        res.send({
-            error: new Error("Invalid Location Data").message
-        });
+        var err = new Error("Invalid Location Data")
+		res.json(Utils.getErrorObject(err));
     } else {
 		req.body.accuracy = req.body.accuracy > global.MAX_ACC ? global.MAX_ACC : Math.abs(req.body.accuracy);
 		if (Event.eventExists(req.params.eid.toString().trim())) {
@@ -51,9 +53,8 @@ router.post('/onlocation/:eid', function(req, res) {
 			});
 		} else {
 			res.statusCode = 404;
-			res.send({
-				error: new Error("Event Not Found").message
-			});
+			var err = new Error("Event Not Found");
+			res.json(Utils.getErrorObject(err));
 		}
     }
 });
@@ -70,25 +71,23 @@ router.post('/checkin/:eid', function(req, res) {
     userUtils.verifyToken(req.body.usertoken, function(err, guser) {
         if (err) {
             res.statusCode = 400;
-            res.send({
-                error: err.message
-            });
+			res.json(Utils.getErrorObject(err));
         } else {
 			if (Event.eventExists(req.params.eid.toString().trim())) {
 				var evnt = Event.getEvent(req.params.eid.toString().trim());
 				evnt.checkin(guser.sub, parseFloat(req.body.latitude), parseFloat(req.body.longitude), function (err, resp) {
 					if (err) {
-						res.json({
-							error: err.message
-						});
+						res.statusCode = 400;
+						res.json(Utils.getErrorObject(err));
 					} else {
-						res.json(resp);
+						res.json(User.getUser(guser.sub).getPublicUser());
+						//res.json(resp);
 					}
 				});
 			} else {
-				res.json({
-					error: new Error("Event Not Found").message
-				});
+				res.statusCode = 400;
+				var err = new Error("Event Not Found");
+				res.json(Utils.getErrorObject(err));
 			}
         }
     });

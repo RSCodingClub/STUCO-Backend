@@ -2,6 +2,7 @@ var Badge = require(global.DIR + '/classes/badge');
 var fs = require('fs');
 var format = require('dateformat');
 var log = require('log-util');
+var Utils = require(global.DIR + '/utils')
 var validator = require('validator');
 
 var generateUserMap = function(users) {
@@ -11,15 +12,15 @@ var generateUserMap = function(users) {
         });
         return r;
     },
-	users = [],
+    users = [],
     userMap = generateUserMap(users);
 
 var User = module.exports = function(user) {
     this.subid = "";
     this.valid = false;
     var _nickname = "",
-		_name = "",
-		_email = "",
+        _name = "",
+        _email = "",
         _scores = [],
         _badges = [],
         _settings = {},
@@ -40,33 +41,21 @@ var User = module.exports = function(user) {
         } else if (typeof user == "object") {
             // user is json object
             if (user.subid && user.nickname) {
-                // console.log("Nickname", user.nickname)
-                // console.log("Scores", user.scores);
-                // console.log("Badges", user.badges);
-                // console.log("Settings", user.settings);
-                // console.log("Permissions", user.permissions);
-
                 this.subid = user.subid;
                 _nickname = validator.escape(encodeURIComponent(user.nickname));
-				_name = user.name ? user.name : "";
-				_email = validator.isEmail(user.email.toString()) ? user.email.toString() : "";
+                _name = user.name ? user.name : "";
+                _email = validator.isEmail(user.email.toString()) ? user.email.toString() : "";
                 _scores = (user.scores) ? user.scores : [];
                 _badges = (user.badges) ? user.badges : [];
                 _settings = (user.settings) ? user.settings : {};
                 _permissions = (user.permissions) ? user.permissions : ["user.view.public"]; // TODO: Add Default Permissions
                 this.valid = true;
-
-                // console.log("Nickname", _nickname)
-                // console.log("Scores", _scores);
-                // console.log("Badges", _badges);
-                // console.log("Settings", _settings);
-                // console.log("Permissions", _permissions);
             } else {
                 this.valid = false;
             }
         }
     }
-
+	// NOTE: Possible crash or at least issues when a user is added twice and should be checked for pre existing user
     if (this.valid /*&& !module.exports.userExists(this.subid)*/ ) {
         users.push(this);
         userMap = generateUserMap(users);
@@ -80,8 +69,8 @@ var User = module.exports = function(user) {
         return {
             subid: this.subid,
             nickname: validator.unescape(decodeURIComponent(_nickname)),
-			name: _name,
-			email: _email,
+            name: _name,
+            email: _email,
             scores: _scores,
             badges: _badges,
             settings: _settings,
@@ -106,7 +95,7 @@ var User = module.exports = function(user) {
         return true;
     };
 
-	// NAME
+    // NAME
     this.getName = function() {
         return _name;
     };
@@ -115,8 +104,8 @@ var User = module.exports = function(user) {
         return true;
     };
 
-	// EMAIL
-	this.getEmail = function() {
+    // EMAIL
+    this.getEmail = function() {
         return _email;
     };
 
@@ -164,7 +153,8 @@ var User = module.exports = function(user) {
         return _badges;
     };
     this.hasBadge = function(b) {
-		var r = false;
+		log.verbose(Utils.logFunction(this.hasBadge), b);
+        var r = false;
         _badges.forEach(function(o, i) {
             if (o.toString() == b.toString().trim()) {
                 r = true;
@@ -200,10 +190,11 @@ var User = module.exports = function(user) {
     this.getPermissions = function() {
         return _permissions;
     };
-	// FIXME
     this.hasPermission = function(permission) {
+        log.verbose("User().hasPermission(" + permission + ")");
         var matches = [permission];
         var permArray = permission.split(".");
+        var r = false;
         permArray.forEach(function(p, i) {
             permArray[permArray.length - 1] = "*";
             matches.push(permArray.join("."));
@@ -213,13 +204,14 @@ var User = module.exports = function(user) {
         matches.forEach(function(m, i) {
             _permissions.forEach(function(p, q) {
                 if (m == p) {
-                    return true;
+                    r = true;
                 }
             });
         });
-        return false;
+        return r;
     };
     this.givePermission = function(permission) {
+        log.verbose("User().givePermission(" + permission + ")");
         if (this.hasPermission(permission)) {
             return false;
         } else {
@@ -228,6 +220,7 @@ var User = module.exports = function(user) {
         }
     };
     this.removePermission = function(permission) {
+        log.verbose("User().removePermission(" + permission + ")");
         _permissions.forEach(function(p, i) {
             if (p == permission) {
                 _permissions.splice(i, 1);
@@ -252,13 +245,13 @@ var User = module.exports = function(user) {
 };
 
 var userData = (function() {
-        try {
-            return JSON.parse(fs.readFileSync(global.DIR + "/../private/users.json"));
-        } catch (e) {
-			// TODO Return last backup if userdata fails to read
-            return [];
-        }
-    })();
+    try {
+        return JSON.parse(fs.readFileSync(global.DIR + "/../private/users.json"));
+    } catch (e) {
+        // TODO Return last backup if userdata fails to read
+        return [];
+    }
+})();
 
 (function() {
     var r = []
@@ -325,18 +318,18 @@ module.exports.getUsers = function() {
 };
 
 module.exports.getLeaderboard = function() {
-	var scores = [];
-	users.forEach(function (u, i) {
-		scores.push(u.getPublicUser());
-	});
-	scores.sort(function(a, b) {
-		if (a.score > b.score) {
-			return -1;
-		}
-		if (a.score < b.score) {
-			return 1;
-		}
-		return 0;
-	});
-	return scores;
+    var scores = [];
+    users.forEach(function(u, i) {
+        scores.push(u.getPublicUser());
+    });
+    scores.sort(function(a, b) {
+        if (a.score > b.score) {
+            return -1;
+        }
+        if (a.score < b.score) {
+            return 1;
+        }
+        return 0;
+    });
+    return scores;
 }

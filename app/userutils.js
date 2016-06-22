@@ -7,7 +7,7 @@ var format = require('dateformat');
 var userUtils = module.exports = {
     // Initialize user variable from users.json
     users: (function() {
-		process.emitWarning('This API is deprecated', 'DeprecationWarning');
+		process.emitWarning('UserUtils is deprecated', 'DeprecationWarning');
         log.verbose("users()");
         try {
             return JSON.parse(fs.readFileSync(__dirname + "/../private/users.json"));

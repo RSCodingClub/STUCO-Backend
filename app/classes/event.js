@@ -6,6 +6,7 @@ var User = require(global.DIR + '/classes/user');
 
 var events = [];
 var eventMap = {};
+var calendarTZ = "America/Chicago";
 
 var Event = module.exports = function(evnt) {
     this.eid = "";
@@ -102,19 +103,19 @@ var Event = module.exports = function(evnt) {
         r['id'] = this.eid;
         return r;
     };
-	this.nice = function () {
-		return {
-			id: this.eid,
-			summary: _['summary'],
-			description: _['description'],
-			eventtype: _['eventtype'],
-			eventreward: _['eventreward'],
-			start: _['start'],
-			end: _['end'],
-			location: _['location'],
-			attendees: _['attendees'].length
-		};
-	};
+    this.nice = function() {
+        return {
+            id: this.eid,
+            summary: _['summary'],
+            description: _['description'],
+            eventtype: _['eventtype'],
+            eventreward: _['eventreward'],
+            start: _['start'],
+            end: _['end'],
+            location: _['location'],
+            attendees: _['attendees'].length
+        };
+    };
     this.get = function(item) {
         return _[item.toString().toLowerCase().trim()];
     };
@@ -160,8 +161,11 @@ var Event = module.exports = function(evnt) {
         log.verbose("User().checkin(" + subid + ", " + lat + ", " + lng + ", " + typeof callback + ")")
         if (User.userExists(subid)) {
             var user = User.getUser(subid);
-            if (new Date(_['start'].dateTime).getTime() < Date.now() && new Date(_['end'].dateTime).getTime() > Date.now()) {
 
+			// Within Timeframe including timezones
+			var withinStart = new Date(_['start'].dateTime ? _['start'].dateTime : (_['start'].date + "T00:00:00" + Utils.getUTCOffsetString(_['start'].timeZone ? _['start'].timeZone : calendarTZ))).getTime() < Date.now();
+			var withinEnd 	= new Date(_['end'].dateTime ? _['end'].dateTime : (_['end'].date + "T00:00:00" + Utils.getUTCOffsetString(_['end'].timeZone ? _['end'].timeZone : calendarTZ))).getTime() > Date.now();
+            if (withinStart && withinEnd) {
                 var attendees = _['attendees'] ? _['attendees'] : [];
                 var checkedin = false;
                 attendees.forEach(function(u, i) {
@@ -208,19 +212,57 @@ var Event = module.exports = function(evnt) {
     };
 };
 
-(function() {
+var updateEvents = function(callback) {
+	log.verbose("updateEvents("+typeof callback+")");
     var URL = "https://www.googleapis.com/calendar/v3/calendars/" + CALENDAR_ID + "/events?key=" + API_KEY;
     request.get(URL, function(err, res, body) {
         if (err) {
             callback(err);
         } else {
+            events = [];
+            eventsMap = {};
             var es = JSON.parse(body).items;
+            var calendarTZ = JSON.parse(body).timeZone;
             es.forEach(function(e, i) {
                 var evnt = new Event(e);
             });
+			callback();
         }
     });
-})();
+};
+
+updateEvents(function(err) {
+	if (err) {
+		log.error(err);
+	}
+});
+
+if (global.ENV == 'developement') {
+    setInterval(function() {
+        updateEvents(function(err) {
+            if (err) {
+                log.error(err);
+            }
+        });
+    }, 5 * 60 * 1000);
+} else if (global.ENV == 'production') {
+    setInterval(function() {
+        var time = new Date().getHours(d.getHours() + (d.getMinutes() / 60));
+        if (time == 14.5 || time == 0) {
+            updateEvents(function(err) {
+                if (err) {
+                    log.error(err);
+                }
+            });
+        }
+    }, 30 * 1000);
+} else {
+	updateEvents(function(err) {
+		if (err) {
+			log.error(err);
+		}
+	});
+}
 
 module.exports.getEvents = function(eid) {
     return events;

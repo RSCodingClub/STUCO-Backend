@@ -11,7 +11,7 @@ var User = require(global.DIR + '/classes/user.js');
 
 router.get('/getscore/:subid', function(req, res) {
     if (User.userExists(req.params.subid.toString())) {
-        res.send(User.getUser(req.params.subid.toString()).getScore().toString());
+        res.send(User.getUser(req.params.subid.toString().trim()).getScore().toString());
     } else {
         res.send((-1).toString());
     }
@@ -19,34 +19,38 @@ router.get('/getscore/:subid', function(req, res) {
 
 router.get('/getbadges/:subid', function(req, res) {
     if (User.userExists(req.params.subid.toString())) {
-        res.json(User.getUser(req.params.subid.toString()).getBadges());
+        res.json(User.getUser(req.params.subid.toString().trim()).getBadges());
     } else {
         res.json([]);
     }
 });
 
 router.get('/atevent/:subid/:eid', function(req, res) {
-    res.send(eventUtils.already(req.params.subid, req.params.eid).toString());
+	process.emitWarning('AtEvent is deprecated', 'DeprecationWarning');
+    try {
+		res.send(eventUtils.already(req.params.subid, req.params.eid).toString());
+	} catch (e) {
+		res.statusCode = 400;
+		var err = new Error("DeprecationWarning");
+		res.json(Utils.getErrorObject(err));
+	}
 });
 
 router.post('/login', function(req, res) {
     if (req.body.usertoken == undefined) {
         res.statusCode = 400;
-        res.send({
-            error: new Error("Invalid UserToken").message
-        });
+        var err = new Error("Invalid UserToken");
+		res.json(Utils.getErrorObject(err));
     } else {
         userUtils.verifyToken(req.body.usertoken, function(err, guser) {
             if (err) {
                 res.statusCode = 400;
-                res.send({
-                    error: err.message
-                });
+				res.json(Utils.getErrorObject(err));
             } else {
                 if (User.userExists(guser.sub)) {
 					User.getUser(guser.sub).setNickname(req.body.nickname ? req.body.nickname : guser.given_name);
 					User.getUser(guser.sub).setName(guser.name);
-                    res.send(User.getUser(guser.sub).object());
+                    res.json(User.getUser(guser.sub).object());
                 } else {
                     var user = new User({
                         subid: guser.sub,
@@ -59,9 +63,8 @@ router.post('/login', function(req, res) {
                         res.json(user.object());
                     } else {
                         res.statusCode = 500;
-                        res.json({
-                            error: new Error("Failed to Create User").message
-                        });
+                        var err = new Error("Failed to Create User");
+						res.json(Utils.getErrorObject(err));
                     }
                 }
             }

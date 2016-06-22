@@ -40,9 +40,8 @@ router.post('/submitbug', function(req, res) {
     } else {
         if (req.body.usertoken == undefined) {
             res.statusCode = 400;
-            res.send({
-                error: new Error("Invalid UserToken").message
-            });
+            var err = new Error("Invalid UserToken");
+			res.json(Utils.getErrorObject(err));
         } else {
             userUtils.verifyToken(req.body.usertoken, function(err, guser) {
                 if (err) {
@@ -75,9 +74,7 @@ router.post('/submitbug', function(req, res) {
                             fs.writeFile(global.DIR + "/../private/bugreports.json", JSON.stringify(data), "utf-8", function(err) {
                                 if (err) {
                                     res.statusCode = 500;
-                                    res.send({
-                                        error: err.message
-                                    });
+                                    res.json(Utils.getErrorObject(err));
                                 } else {
                                     // Successfully submited bug
                                     if (User.userExists(guser.sub.toString().trim())) {
@@ -91,9 +88,7 @@ router.post('/submitbug', function(req, res) {
                             });
                         } catch (e) {
                             res.statusCode = 500;
-                            res.send({
-                                error: e.message
-                            });
+                            res.json(Utils.getErrorObject(e));
                         }
                     });
                 }

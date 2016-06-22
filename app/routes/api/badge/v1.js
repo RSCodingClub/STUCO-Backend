@@ -6,9 +6,11 @@ var Badge = require(global.DIR + "/classes/badge");
 
 router.get('/getbadge/:bid', function(req, res) {
 	if (Badge.badgeExists(req.params.bid.toString().trim())) {
-		res.send(Badge.getBadge(req.params.bid.toString().trim()).object());
+		res.json(Badge.getBadge(req.params.bid.toString().trim()).object());
 	} else {
-		res.json([]);
+		var err = new Error("Badge Not Found");
+		res.statusCode = 400;
+		res.json(Utils.getErrorObject(err));
 	}
 });
 
