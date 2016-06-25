@@ -1,7 +1,6 @@
 var log = require('log-util');
 var request = require('request');
 var cluster = require('cluster');
-
 module.exports = {
     getDistance: function(lat1, lng1, lat2, lng2) {
         log.verbose("getDistance(" + lat1 + ", " + lng1 + ", " + lat2 + ", " + lng2 + ")");
@@ -19,58 +18,27 @@ module.exports = {
     getLocationFromAddress: function(address, callback) {
         log.verbose("getLocationFromAddress(" + address + ", " + typeof callback + ")");
         if (typeof callback == "function") {
-            var API_KEY = "AIzaSyDQhrNxeNTp-uONV9fUuElCylSQF2MHMtI";
-            var addressURI = encodeURIComponent(address);
-            var locationURL = "https://maps.googleapis.com/maps/api/geocode/json?key=" + API_KEY + "&address=" + addressURI;
+            var addressURI = encodeURIComponent(address.toString());
+            var locationURL = "https://maps.googleapis.com/maps/api/geocode/json?key=" + global.API_KEY + "&address=" + addressURI;
             request.get(locationURL, function(err, resp, body) {
                 if (err) {
                     callback(err);
                 } else {
-                    var data = JSON.parse(body),
-                        r = {
-                            lat: data.results[0].geometry.location.lat,
-                            lng: data.results[0].geometry.location.lng
-                        };
-                    callback(undefined, r);
+					try {
+						var data = JSON.parse(body),
+							r = {
+                            	lat: data.results[0].geometry.location.lat,
+                            	lng: data.results[0].geometry.location.lng
+                        	};
+						callback(undefined, r);
+					} catch (e) {
+						callback(e);
+					}
                 }
             });
         } else {
-            console.log("invalid callback type");
+            throw new Error("Invalid Callback Type");
         }
-    },
-    logFunction: function(method) {
-        var args = arguments,
-            r = "",
-            methodName = "",
-            methodCaller = "";
-        methodArgs = "";
-        delete args[0];
-        if (typeof method == "function") {
-			console.log("Method", require('util').inspect(method.name, false, null));
-            methodName = method.name;
-            methodCaller = method.caller !== null ? method.caller.name + " -> " : "";
-        } else {
-            return false;
-        }
-		var i = 0;
-		for (var arg in args) {
-			if (typeof arg == "function") {
-                methodArgs += typeof arg;
-            } else if (typeof arg == "string") {
-                if (arg.length > 15) {
-                    methodArgs += arg.substring(0, 15) + "...";
-                } else {
-                    methodArgs += arg;
-                }
-            } else {
-                methodArgs += arg;
-            }
-            if (i < args.length) {
-                methodArgs += ", "
-            }
-			i++;
-		}
-        return methodCaller + methodName + "(" + methodArgs + ")";
     },
     getErrorObject: function(err) {
         return {

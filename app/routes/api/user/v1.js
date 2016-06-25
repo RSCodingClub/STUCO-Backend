@@ -13,22 +13,26 @@ router.get('/getscore/:subid', function(req, res) {
     if (User.userExists(req.params.subid.toString())) {
         res.send(User.getUser(req.params.subid.toString().trim()).getScore().toString());
     } else {
-        res.send((-1).toString());
+		res.statusCode = 404;
+		var err = new Error("User Not Found");
+        res.json(Utils.getErrorObject(err));
     }
 });
 
 router.get('/getbadges/:subid', function(req, res) {
-    if (User.userExists(req.params.subid.toString())) {
+    if (User.userExists(req.params.subid.toString().trim())) {
         res.json(User.getUser(req.params.subid.toString().trim()).getBadges());
     } else {
-        res.json([]);
+		res.statusCode = 404;
+		var err = new Error("User Not Found");
+        res.json(Utils.getErrorObject(err));
     }
 });
 
 router.get('/atevent/:subid/:eid', function(req, res) {
 	process.emitWarning('AtEvent is deprecated', 'DeprecationWarning');
     try {
-		res.send(eventUtils.already(req.params.subid, req.params.eid).toString());
+		res.send(eventUtils.already(req.params.subid.toString().trim(), req.params.eid.toString().trim()).toString());
 	} catch (e) {
 		res.statusCode = 400;
 		var err = new Error("DeprecationWarning");
@@ -42,31 +46,41 @@ router.post('/login', function(req, res) {
         var err = new Error("Invalid UserToken");
 		res.json(Utils.getErrorObject(err));
     } else {
-        userUtils.verifyToken(req.body.usertoken, function(err, guser) {
+        userUtils.verifyToken(req.body.usertoken.toString().trim(), function(err, guser) {
             if (err) {
                 res.statusCode = 400;
 				res.json(Utils.getErrorObject(err));
             } else {
-                if (User.userExists(guser.sub)) {
-					User.getUser(guser.sub).setNickname(req.body.nickname ? req.body.nickname : guser.given_name);
-					User.getUser(guser.sub).setName(guser.name);
-                    res.json(User.getUser(guser.sub).object());
-                } else {
-                    var user = new User({
-                        subid: guser.sub,
-						name: guser.name,
-                        nickname: req.body.nickname ? req.body.nickname : guser.given_name,
-						email: guser.email
-                    });
-                    if (user.valid) {
-						user.giveBadge(0);
-                        res.json(user.object());
-                    } else {
-                        res.statusCode = 500;
-                        var err = new Error("Failed to Create User");
-						res.json(Utils.getErrorObject(err));
-                    }
-                }
+				if (guser.email == undefined || guser.email == "" | guser.sub == undefined || guser.sub == "") {
+					res.statusCode = 400;
+					var err = new Error("Google Token Validation Failed");
+					res.json(Utils.getErrorObject(err));
+				} else {
+					if (User.userExists(guser.sub.toString().trim())) {
+						if (req.body.nickname) {
+							User.getUser(guser.sub.toString().trim()).setNickname(req.body.nickname.toString().trim());
+						}
+						if (guser.name) {
+							User.getUser(guser.sub.toString().trim()).setName(guser.name.toString());
+						}
+	                    res.json(User.getUser(guser.sub.toString().trim()).object());
+	                } else {
+	                    var user = new User({
+	                        subid: guser.sub.toString().trim(),
+							name: guser.name ? guser.name.toString() : (req.body.nickname ? req.body.nickname.toString().trim() : ""),
+	                        nickname: req.body.nickname ? req.body.nickname.toString().trim() : (guser.given_name ? guser.given_name.toString().trim() : (guser.name ? guser.name.toString() : "")),
+							email: guser.email
+	                    });
+	                    if (user.valid) {
+							user.giveBadge(0);
+	                        res.json(user.object());
+	                    } else {
+	                        res.statusCode = 500;
+	                        var err = new Error("Failed to Create User");
+							res.json(Utils.getErrorObject(err));
+	                    }
+	                }
+				}
             }
         });
     }

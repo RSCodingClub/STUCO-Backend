@@ -4,6 +4,7 @@ var router = express.Router({
 });
 var userUtils = require(global.DIR + '/userutils');
 var eventUtils = require(global.DIR + '/eventutils');
+var Utils = require(global.DIR + '/utils');
 var User = require(global.DIR + '/classes/user');
 var Badge = require(global.DIR + '/classes/badge');
 var Event = require(global.DIR + '/classes/event');
@@ -39,7 +40,7 @@ router.get(['/details/:eid', '/event/:eid'], function(req, res) {
 	}
 });
 
-router.post('/onlocation/:eid', function(req, res) {
+router.post(['/onlocation/:eid'], function(req, res) {
     if (!req.body.latitude || !req.body.longitude || !req.body.accuracy) {
         res.statusCode = 400;
         var err = new Error("Invalid Location Data")
@@ -49,7 +50,11 @@ router.post('/onlocation/:eid', function(req, res) {
 		if (Event.eventExists(req.params.eid.toString().trim())) {
 			var evnt = Event.getEvent(req.params.eid.toString().trim());
 			evnt.onLocation(parseFloat(req.body.latitude), parseFloat(req.body.longitude), parseFloat(req.body.accuracy), function (err, onlocation) {
-				res.send(onlocation.toString());
+				if (err) {
+					res.json(Utils.getErrorObject(err));
+				} else {
+					res.send(onlocation.toString());
+				}
 			});
 		} else {
 			res.statusCode = 404;
@@ -68,6 +73,7 @@ router.post('/onlocation/:eid', function(req, res) {
 // @param {string} eid - Event ID
 // @param {string} usertoken - RSA256 Google User Access Token
 router.post('/checkin/:eid', function(req, res) {
+	// TODO: Verify Parameters
     userUtils.verifyToken(req.body.usertoken, function(err, guser) {
         if (err) {
             res.statusCode = 400;

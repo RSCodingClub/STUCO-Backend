@@ -134,20 +134,21 @@ var Event = module.exports = function(evnt) {
     //     }
     // };
     this.onLocation = function(lat, lng, acc, callback) {
-        Utils.getLocationFromAddress(_['location'], function(err, location) {
-            if (err) {
-                callback(err);
-            } else {
-                var dist = Utils.getDistance(location.lat, location.lng, lat, lng);
-                if (dist + acc < global.ACCEPTABLE_RADIUS) {
-                    callback(undefined, true);
-                } else if (dist - acc < global.ACCEPTABLE_RADIUS) {
-                    callback(undefined, true);
-                } else {
-                    callback(undefined, false);
-                }
-            }
-        });
+        callback(undefined, true);
+		// Utils.getLocationFromAddress(_['location'], function(err, location) {
+        //     if (err) {
+        //         callback(err);
+        //     } else {
+        //         var dist = Utils.getDistance(location.lat, location.lng, lat, lng);
+        //         if (dist + acc < global.ACCEPTABLE_RADIUS) {
+        //             callback(undefined, true);
+        //         } else if (dist - acc < global.ACCEPTABLE_RADIUS) {
+        //             callback(undefined, true);
+        //         } else {
+        //             callback(undefined, false);
+        //         }
+        //     }
+        // });
     };
 
     // General checkin method
@@ -162,9 +163,9 @@ var Event = module.exports = function(evnt) {
         if (User.userExists(subid)) {
             var user = User.getUser(subid);
 
-			// Within Timeframe including timezones
-			var withinStart = new Date(_['start'].dateTime ? _['start'].dateTime : (_['start'].date + "T00:00:00" + Utils.getUTCOffsetString(_['start'].timeZone ? _['start'].timeZone : calendarTZ))).getTime() < Date.now();
-			var withinEnd 	= new Date(_['end'].dateTime ? _['end'].dateTime : (_['end'].date + "T00:00:00" + Utils.getUTCOffsetString(_['end'].timeZone ? _['end'].timeZone : calendarTZ))).getTime() > Date.now();
+            // Within Timeframe including timezones
+            var withinStart = new Date(_['start'].dateTime ? _['start'].dateTime : (_['start'].date + "T00:00:00" + Utils.getUTCOffsetString(_['start'].timeZone ? _['start'].timeZone : calendarTZ))).getTime() < Date.now();
+            var withinEnd = new Date(_['end'].dateTime ? _['end'].dateTime : (_['end'].date + "T00:00:00" + Utils.getUTCOffsetString(_['end'].timeZone ? _['end'].timeZone : calendarTZ))).getTime() > Date.now();
             if (withinStart && withinEnd) {
                 var attendees = _['attendees'] ? _['attendees'] : [];
                 var checkedin = false;
@@ -179,21 +180,27 @@ var Event = module.exports = function(evnt) {
                             callback(err);
                         } else {
                             if (onlocation) {
-                                _['attendees'].push({
+                                var attendee = {
                                     id: subid,
                                     email: user.getEmail(),
                                     displayName: user.getNickname(),
                                     responseStatus: "accepted"
-                                });
-                                googleUtils.updateEvent(this.eid, {
+                                };
+								_['attendees'].push(attendee);
+                                googleUtils.updateEvent(_['googleevent'].id, {
                                     start: _['start'],
                                     end: _['end'],
                                     attendees: _['attendees']
                                 }, function(err, resp) {
-                                    console.log(user.toString() + " checked into " + _['summary']);
-                                    // TODO GIVE BADGE AND POINTS TO USER
-                                    // user.giveScore("event", _['eventreward'], this.eid);
-                                    callback(undefined, "Good to go");
+									if (err) {
+										console.log("splicing attendee");
+										_['attendees'].splice(_['attendees'].length - 1, 1);
+										callback(err);
+									} else {
+										log.log(user.toString() + " checked into " + _['summary']);
+										// TODO GIVE BADGE AND POINTS TO USER
+										callback(undefined, true);
+									}
                                 });
                             } else {
                                 callback(new Error("Not At Event Location"));
@@ -213,28 +220,42 @@ var Event = module.exports = function(evnt) {
 };
 
 var updateEvents = function(callback) {
-	log.verbose("updateEvents("+typeof callback+")");
-    var URL = "https://www.googleapis.com/calendar/v3/calendars/" + CALENDAR_ID + "/events?key=" + API_KEY;
-    request.get(URL, function(err, res, body) {
+    log.verbose("updateEvents(" + typeof callback + ")");
+    googleUtils.getEvents({}, function(err, events) {
         if (err) {
-            callback(err);
+			log.error(err.stack);
         } else {
-            events = [];
-            eventsMap = {};
-            var es = JSON.parse(body).items;
-            var calendarTZ = JSON.parse(body).timeZone;
-            es.forEach(function(e, i) {
-                var evnt = new Event(e);
-            });
-			callback();
+            if (events.length > 0) {
+                events.forEach(function(e, i) {
+                    var evnt = new Event(e);
+                    callback();
+                });
+            }
         }
     });
+    // var URL = "https://www.googleapis.com/calendar/v3/calendars/" + CALENDAR_ID + "/events?key=" + API_KEY;
+    // request.get(URL, function(err, res, body) {
+    //     if (err) {
+    //         callback(err);
+    //     } else {
+    //         events = [];
+    //         eventsMap = {};
+    //         var es = JSON.parse(body);
+    //         var calendarTZ = JSON.parse(body).timeZone;
+    //         if (es.items) {
+    //             es.items.forEach(function(e, i) {
+    //                 var evnt = new Event(e);
+    //                 callback();
+    //             });
+    //         }
+    //     }
+    // });
 };
 
 updateEvents(function(err) {
-	if (err) {
-		log.error(err);
-	}
+    if (err) {
+        log.error(err);
+    }
 });
 
 if (global.ENV == 'developement') {
@@ -257,11 +278,11 @@ if (global.ENV == 'developement') {
         }
     }, 30 * 1000);
 } else {
-	updateEvents(function(err) {
-		if (err) {
-			log.error(err);
-		}
-	});
+    updateEvents(function(err) {
+        if (err) {
+            log.error(err);
+        }
+    });
 }
 
 module.exports.getEvents = function(eid) {

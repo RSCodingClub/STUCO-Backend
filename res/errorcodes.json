@@ -16,5 +16,6 @@
 	"Permission Requirements Not Met": 14,
 	"Invalid Permission Type": 15,
 	"Badge Not Found": 16,
-	"DeprecationWarning": 17
+	"DeprecationWarning": 17,
+	"Invalid Request Parameters": 18
 }

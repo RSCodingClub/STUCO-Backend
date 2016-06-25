@@ -6,15 +6,18 @@ var format = require('dateformat'),
     methodOverride = require('method-override'),
     log = require('log-util'),
     express = require('express'),
-    app = express();
+    app = express(),
+	PrettyError = require('pretty-error'),
+	pe = new PrettyError();
 
 log.setDateFormat("HH:MM:ss");
 
+global.PORT			= process.env.PORT ? process.env.PORT : 3000;
 global.DIR 			= __dirname;
 global.ENV			= "developement";
 
 global.API_KEY		= "AIzaSyDQhrNxeNTp-uONV9fUuElCylSQF2MHMtI";
-global.CALENDAR_ID 	= "d7qc2o4as3tspi1k9617pdjvho@group.calendar.google.com"; // "bcervcjfb5q5niuunqbcjk9iig@group.calendar.google.com"; //"rsdmo.org_39313733373631393232@resource.calendar.google.com";
+global.CALENDAR_ID 	= "bcervcjfb5q5niuunqbcjk9iig@group.calendar.google.com"; //"rsdmo.org_u4953i62qnu54ue96198b5eoas@group.calendar.google.com"; //"d7qc2o4as3tspi1k9617pdjvho@group.calendar.google.com"; //"rsdmo.org_39313733373631393232@resource.calendar.google.com";
 global.ACCEPTABLE_RADIUS = 400;
 global.MAX_ACC 		= 40;
 
@@ -88,7 +91,7 @@ app.use('/res', function(req, res, next) {
 process.on('uncaughtException', function(err) {
 	log.error("Fatal Error: Exiting Application");
 	log.error(err);
-	// log.error(err.stack);
+	log.error(pe.render(err));
     fs.writeFileSync(__dirname + "/../private/users.json", JSON.stringify(User.export()), "utf-8");
 });
 

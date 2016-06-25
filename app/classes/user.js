@@ -48,7 +48,7 @@ var User = module.exports = function(user) {
                 _scores = (user.scores) ? user.scores : [];
                 _badges = (user.badges) ? user.badges : [];
                 _settings = (user.settings) ? user.settings : {};
-                _permissions = (user.permissions) ? user.permissions : ["user.view.public"]; // TODO: Add Default Permissions
+                _permissions = (user.permissions) ? user.permissions : ["user.view.public", "bugreports.create"]; // TODO: Add Default Permissions
                 this.valid = true;
             } else {
                 this.valid = false;
@@ -153,7 +153,6 @@ var User = module.exports = function(user) {
         return _badges;
     };
     this.hasBadge = function(b) {
-		log.verbose(Utils.logFunction(this.hasBadge), b);
         var r = false;
         _badges.forEach(function(o, i) {
             if (o.toString() == b.toString().trim()) {

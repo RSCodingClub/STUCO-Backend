@@ -38,7 +38,6 @@ var exportUsers = function () {
 };
 
 module.exports = function(app) {
-    var PORT = process.env.PORT | 3000;
     log.info("Storing Data for " + User.getUsers().length + " users");
 
 	exportUsers();
@@ -51,7 +50,7 @@ module.exports = function(app) {
 	app.use('/api/admin/v1/', routes.apis.admin.v1);
 
     app.listen(PORT);
-    log.info('Process ' + process.pid + ' listening on port ' + PORT);
+    log.info('Process ' + process.pid + ' listening on port ' + global.PORT);
 
 	// userUtils.givePermission(103688538784493564468, "*");
 	// userUtils.givePermission(100033758533830286348, "*");
