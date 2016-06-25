@@ -17,5 +17,6 @@
 	"Invalid Permission Type": 15,
 	"Badge Not Found": 16,
 	"DeprecationWarning": 17,
-	"Invalid Request Parameters": 18
+	"Invalid Request Parameters": 18,
+	"Missing or Invalid Authorization Header": 19
 }

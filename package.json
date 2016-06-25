@@ -16,6 +16,7 @@
     "googleapis": "^7.1.0",
     "log-util": "~1.1.1",
     "method-override": "^2.3.5",
+    "mongoose": "^4.5.2",
     "morgan": "^1.7.0",
     "request": "^2.72.0",
     "validator": "^5.4.0"

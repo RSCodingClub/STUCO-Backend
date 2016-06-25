@@ -4,8 +4,9 @@ var router = express.Router({
 });
 var request = require('request');
 var fs = require('fs');
+var Utils = require(global.DIR + '/utils');
 var userUtils = require(global.DIR + '/userutils');
-var User = require(global.DIR + '/classes/user');
+var User = require(global.DIR + '/models/user.model');
 var badgeUtils = require(global.DIR + '/badgeutils');
 var GitHubApi = require("github");
 var github = new GitHubApi({
@@ -25,6 +26,41 @@ github.authenticate({
     type: "basic",
     username: "rscodingbot",
     password: "codingclub1"
+});
+
+router.use(function (req, res, next) {
+	if (req.headers.authorization && req.headers.authorization.startsWith("Token ")) {
+		res.set("Authorized", false);
+		userUtils.verifyToken(req.headers.authorization.substring("Token ".length), function (err, guser) {
+			if (err) {
+				res.statusCode = 400;
+				res.json(Utils.getErrorObject(err));
+			} else {
+				User.userExists(guser.sub.toString().trim(), function (exists) {
+					if (exists) {
+						User.getUser(guser.sub.toString().trim(), function (err, user) {
+							if (!err) {
+								req.authorizedUser = user;
+								req.authorized = true;
+								res.set("Authorized", true);
+							}
+							next();
+						});
+					} else {
+						// Create User
+						User.createUser(guser, function (err, dbuser) {
+							req.authorizedUser = dbUser;
+							req.authorized = true;
+							res.set("Authorized", true);
+							next()
+						});
+					}
+				});
+			}
+		});
+	} else {
+		next()
+	}
 });
 
 router.get('/', function(req, res) {
@@ -58,60 +94,70 @@ router.post(['/submitbug', '/createbugreport', '/submitreport','/bugreport','/bu
                     res.statusCode = 401;
                     res.json(Utils.getErrorObject(err));
                 } else {
-                    if (User.userExists(guser.toString().trim())) {
-                        var user = User.getUser(guser.toString().trim());
-                        if (user.hasPermission("bugreports.create")) {
-                            github.issues.create({
-                                user: "RSCodingClub",
-                                repo: "STUCO-Backend",
-                                title: req.body.summary,
-                                body: req.body.description,
-                                labels: [req.body.bugtype]
-                            });
-                            var report = {
-                                subid: guser.sub,
-                                email: guser.email,
-                                name: guser.name,
-                                bugtype: req.body.bugtype,
-                                summary: req.body.summary,
-                                description: req.body.description,
-                                syslogs: req.body.syslogs,
-                                applogs: req.body.applogs
-                            }
-                            fs.readFile(global.DIR + "/../private/bugreports.json", "utf-8", function(err, buffer) {
-                                try {
-                                    var data = JSON.parse(buffer.toString());
-                                    data.push(report);
-                                    fs.writeFile(global.DIR + "/../private/bugreports.json", JSON.stringify(data), "utf-8", function(err) {
-                                        if (err) {
-                                            res.statusCode = 500;
-                                            res.json(Utils.getErrorObject(err));
-                                        } else {
-                                            // Successfully submited bug
-                                            if (User.userExists(guser.sub.toString().trim())) {
-                                                var user = User.getUser(guser.sub.toString().trim());
-                                                user.giveBadge(26);
-                                                res.send(true);
-                                            } else {
-                                                res.send(false)
-                                            }
-                                        }
-                                    });
-                                } catch (e) {
-                                    res.statusCode = 500;
-                                    res.json(Utils.getErrorObject(e));
-                                }
-                            });
-                        } else {
-                            res.statusCode = 401;
-                            var err = new Error("Permission Requirements Not Met");
-                            res.json(Utils.getErrorObject(err));
-                        }
-                    } else {
-                        res.statusCode = 404;
-                        var err = new Error("Requesting User Not Found");
-                        res.json(Utils.getErrorObject(err));
-                    }
+					User.userExists(guser.sub.toString().trim(), function(exists) {
+						if (exists) {
+							User.getUser(guser.sub.toString().trim(), function (err, user) {
+								if (err) {
+									res.statusCode = 500;
+									res.json(Utils.getErrorObject(err));
+								} else {
+									if (user.hasPermission("bugreports.create")) {
+										github.issues.create({
+			                                user: "RSCodingClub",
+			                                repo: "STUCO-Backend",
+			                                title: req.body.summary,
+			                                body: req.body.description,
+			                                labels: [req.body.bugtype]
+			                            });
+			                            var report = {
+			                                subid: guser.sub,
+			                                email: guser.email,
+			                                name: guser.name,
+			                                bugtype: req.body.bugtype,
+			                                summary: req.body.summary,
+			                                description: req.body.description,
+			                                syslogs: req.body.syslogs,
+			                                applogs: req.body.applogs
+			                            }
+			                            fs.readFile(global.DIR + "/../private/bugreports.json", "utf-8", function(err, buffer) {
+			                                try {
+			                                    var data = JSON.parse(buffer.toString());
+			                                    data.push(report);
+			                                    fs.writeFile(global.DIR + "/../private/bugreports.json", JSON.stringify(data), "utf-8", function(err) {
+			                                        if (err) {
+			                                            res.statusCode = 500;
+			                                            res.json(Utils.getErrorObject(err));
+			                                        } else {
+			                                            // Successfully submited bug
+			                                            user.giveBadge(26);
+														user.save(function(err, dbUser) {
+															if (err) {
+																res.statusCode = 500;
+							                                    res.json(Utils.getErrorObject(err));
+															} else {
+																res.send(user.getPublicUser());
+															}
+														});
+			                                        }
+			                                    });
+			                                } catch (e) {
+			                                    res.statusCode = 500;
+			                                    res.json(Utils.getErrorObject(e));
+			                                }
+			                            });
+									} else {
+										res.statusCode = 401;
+			                            var err = new Error("Permission Requirements Not Met");
+			                            res.json(Utils.getErrorObject(err));
+									}
+								}
+							})
+						} else {
+							res.statusCode = 404;
+	                        var err = new Error("Requesting User Not Found");
+	                        res.json(Utils.getErrorObject(err));
+						}
+					});
                 }
             });
         }

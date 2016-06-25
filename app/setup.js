@@ -7,30 +7,38 @@ var format = require('dateformat'),
     log = require('log-util'),
     express = require('express'),
     app = express(),
-	PrettyError = require('pretty-error'),
-	pe = new PrettyError();
+    mongoose = require('mongoose'),
+    PrettyError = require('pretty-error'),
+    pe = new PrettyError();
 
 log.setDateFormat("HH:MM:ss");
 
-global.PORT			= process.env.PORT ? process.env.PORT : 3000;
-global.DIR 			= __dirname;
-global.ENV			= "developement";
+global.PORT = process.env.PORT ? process.env.PORT : 3000;
+global.DIR = __dirname;
+global.ENV = "developement";
 
-global.API_KEY		= "AIzaSyDQhrNxeNTp-uONV9fUuElCylSQF2MHMtI";
-global.CALENDAR_ID 	= "bcervcjfb5q5niuunqbcjk9iig@group.calendar.google.com"; //"rsdmo.org_u4953i62qnu54ue96198b5eoas@group.calendar.google.com"; //"d7qc2o4as3tspi1k9617pdjvho@group.calendar.google.com"; //"rsdmo.org_39313733373631393232@resource.calendar.google.com";
+global.API_KEY = "AIzaSyDQhrNxeNTp-uONV9fUuElCylSQF2MHMtI";
+global.CALENDAR_ID = "bcervcjfb5q5niuunqbcjk9iig@group.calendar.google.com"; //"rsdmo.org_u4953i62qnu54ue96198b5eoas@group.calendar.google.com"; //"d7qc2o4as3tspi1k9617pdjvho@group.calendar.google.com"; //"rsdmo.org_39313733373631393232@resource.calendar.google.com";
 global.ACCEPTABLE_RADIUS = 400;
-global.MAX_ACC 		= 40;
+global.MAX_ACC = 40;
 
-global.ERR_CODES 	= JSON.parse(fs.readFileSync(global.DIR + '/../res/errorcodes.json'));
-global.TZ 			= JSON.parse(fs.readFileSync(global.DIR + '/../res/timezones.json'));
+global.ERR_CODES = JSON.parse(fs.readFileSync(global.DIR + '/../res/errorcodes.json'));
+global.TZ = JSON.parse(fs.readFileSync(global.DIR + '/../res/timezones.json'));
 
 if (global.ENV == "developement") {
-	log.setLevel(log.Log.VERBOSE);
+    log.setLevel(log.Log.VERBOSE);
 } else if (global.ENV == "production") {
-	log.setLevel(log.Log.WARN);
+    log.setLevel(log.Log.WARN);
 } else {
-	log.setLevel(log.Log.DEBUG);
+    log.setLevel(log.Log.DEBUG);
 }
+var mongoLogin = {
+    usr: "",
+	pwd: ""
+}
+// mongoose.set('debug', true);
+mongoose.connect("mongodb://" + mongoLogin.usr + ":" + mongoLogin.pwd + "@localhost:27017/stucoapp");
+var UserModel = require(global.DIR + '/models/user.model');
 
 var userUtils = require(global.DIR + '/userutils');
 var scoreUtils = require(global.DIR + '/scoreutils');
@@ -89,15 +97,15 @@ app.use('/res', function(req, res, next) {
 
 // Handle Uncaught Exceptions
 process.on('uncaughtException', function(err) {
-	log.error("Fatal Error: Exiting Application");
-	log.error(err);
-	log.error(pe.render(err));
-    fs.writeFileSync(__dirname + "/../private/users.json", JSON.stringify(User.export()), "utf-8");
+    log.error("Fatal Error: Exiting Application");
+    log.error(err);
+    log.error(pe.render(err));
+    // fs.writeFileSync(__dirname + "/../private/users.json", JSON.stringify(User.export()), "utf-8");
 });
 
 // Handle Warnings
 process.on('warning', function(warning) {
-	log.warn(warning);
+    log.warn(warning);
 });
 
 // Initialize the server

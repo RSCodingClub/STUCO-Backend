@@ -5,9 +5,9 @@ var scoreUtils = require(global.DIR + '/scoreutils');
 var badgeUtils = require(global.DIR + '/badgeutils');
 var Utils = require(global.DIR + '/utils');
 var express = require('express');
-var User = require(global.DIR + '/classes/user.js');
 var Badge = require(global.DIR + '/classes/badge.js');
 var Event = require(global.DIR + '/classes/event.js');
+var UserModel = require(global.DIR + '/models/user.model');
 
 var routes = {
     apis: {
@@ -27,20 +27,20 @@ var routes = {
     index: require(global.DIR + "/routes/routes")
 };
 
-var exportUsers = function () {
-	fs.writeFile(__dirname + "/../private/users.json", JSON.stringify(User.export()), "utf-8", function(err) {
-        if (err) {
-			throw err;
-		} else {
-			setTimeout(exportUsers, 1000);
-		}
-    });
-};
+// var exportUsers = function () {
+// 	fs.writeFile(__dirname + "/../private/users.json", JSON.stringify(User.export()), "utf-8", function(err) {
+//         if (err) {
+// 			throw err;
+// 		} else {
+// 			setTimeout(exportUsers, 1000);
+// 		}
+//     });
+// };
 
 module.exports = function(app) {
-    log.info("Storing Data for " + User.getUsers().length + " users");
-
-	exportUsers();
+	UserModel.getUsers(function (err, users) {
+		log.info("Storing Data for " + (err ? 0 : users.length) + " users");
+	});
 
     app.use('/', routes.index);
 
@@ -55,16 +55,14 @@ module.exports = function(app) {
 	// userUtils.givePermission(103688538784493564468, "*");
 	// userUtils.givePermission(100033758533830286348, "*");
 
-	if (User.userExists("103688538784493564468")) {
-		User.getUser("103688538784493564468").giveBadge(24);
-		User.getUser("103688538784493564468").givePermission("*");
-	}
-	if (User.userExists("100033758533830286348")) {
-		User.getUser("100033758533830286348").giveBadge(24);
-		User.getUser("100033758533830286348").givePermission("*");
-	}
+	// if (User.userExists("103688538784493564468")) {
+	// 	User.getUser("103688538784493564468").giveBadge(24);
+	// 	User.getUser("103688538784493564468").givePermission("*");
+	// }
+	// if (User.userExists("100033758533830286348")) {
+	// 	User.getUser("100033758533830286348").giveBadge(24);
+	// 	User.getUser("100033758533830286348").givePermission("*");
+	// }
 
 	var evnt = new Event();
-
-    User.backup();
 };
