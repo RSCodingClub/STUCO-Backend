@@ -1,7 +1,10 @@
 var validator = require('validator');
 var Badge = require(global.DIR + '/classes/badge');
+var Utils = require(global.DIR + '/utils');
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
+
+var calendarTZ = "America/Chicago";
 
 var EventSchema = new Schema({
 	eid: {
@@ -83,14 +86,45 @@ EventSchema.methods.exportEvent = function() {
 EventSchema.methods.userAttending = function(subid) {
 	var r = false;
 	this.attendees.forEach(function (attendee, i) {
-		if (attendee.id == subid) {
+		if (attendee.id === subid) {
 			r = true;
 		}
 	});
 	return r;
 };
 
-module.exports = Event = mongoose.model("Event", EventSchema);
+module.exports = Evnt = mongoose.model("Event", EventSchema);
+
+module.exports.createEvent = function(a, callback) {
+	Evnt.getEvent(a.eid, function (err, evnt) {
+		if (evnt === undefined || evnt === null || evnt.length === 0) {
+			// Create Event
+			Utils.getLocationFromAddress(a.location, function (err, location) {
+				if (err) {
+					callback(err);
+				} else {
+					var r = {
+						eid: a.eid,
+						summary: a.summary,
+						description: a.descrption,
+						eventtype: a.type, // Possibly read from description
+						location:{
+							address: a.location,
+							latitude: location.lat,
+							longitude: location.lng
+						}
+						start: new Date(_['start'].dateTime ? _['start'].dateTime : (_['start'].date + "T00:00:00" + Utils.getUTCOffsetString(_['start'].timeZone ? _['start'].timeZone : calendarTZ))),
+						end: new Date(_['end'].dateTime ? _['end'].dateTime : (_['end'].date + "T00:00:00" + Utils.getUTCOffsetString(_['end'].timeZone ? _['end'].timeZone : calendarTZ))),
+					};
+					var e = new Evnt(r);
+					e.save(callback);
+				}
+			});
+		} else {
+			callback(new Error("Event Already Exists"));
+		}
+	};
+};
 
 module.exports.eventExists = function(subid, callback) {
 	this.getEvent(subid, function (err, evnt) {
@@ -103,15 +137,15 @@ module.exports.eventExists = function(subid, callback) {
 };
 
 module.exports.getEvent = function(eid, callback) {
-    Event.findOne({
+    Evnt.findOne({
         eid: eid
     }, callback);
 };
 
 module.exports.getEvents = function(callback) {
-    Event.find({}, callback);
+    Evnt.find({}, callback);
 };
 
 module.exports.getActiveEvents = function (callback) {
-	Event.find({}).where('end').gt(new Date()).sort('+start').exec(callback);
+	Evnt.find({}).where('end').gt(new Date()).sort('+start').exec(callback);
 };

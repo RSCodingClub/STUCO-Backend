@@ -1,3 +1,5 @@
+'use strict'
+
 var format = require('dateformat'),
     fs = require('fs'),
     path = require('path'),
@@ -5,15 +7,20 @@ var format = require('dateformat'),
     bodyParser = require('body-parser'),
     methodOverride = require('method-override'),
     log = require('log-util'),
+    https = require('https'),
     express = require('express'),
     app = express(),
     mongoose = require('mongoose'),
-    PrettyError = require('pretty-error'),
-    pe = new PrettyError();
+    helmet = require('helmet');
 
 log.setDateFormat("HH:MM:ss");
 
-global.PORT = process.env.PORT ? process.env.PORT : 3000;
+// StartCom privat key password 9OwkuwSf7SjM7ITFwh9zYyFx5A7yEcFz
+
+// APP private key password DLwOzvvqK9UhT2nW7C4AzwXJiubXBGw9
+// CA private key password 5yqj1ssdO1fPA6wDf3PmbvmPNxhPE5um
+
+global.PORT = process.env.PORT ? process.env.PORT : 443;
 global.DIR = __dirname;
 global.ENV = "developement";
 
@@ -25,32 +32,30 @@ global.MAX_ACC = 40;
 global.ERR_CODES = JSON.parse(fs.readFileSync(global.DIR + '/../res/errorcodes.json'));
 global.TZ = JSON.parse(fs.readFileSync(global.DIR + '/../res/timezones.json'));
 
-if (global.ENV == "developement") {
+if (global.ENV === "developement") {
     log.setLevel(log.Log.VERBOSE);
-} else if (global.ENV == "production") {
+} else if (global.ENV === "production") {
     log.setLevel(log.Log.WARN);
 } else {
     log.setLevel(log.Log.DEBUG);
 }
 var mongoLogin = {
-    usr: "",
-	pwd: ""
+    usr: "mongoose",
+    pwd: "5fC7O9p5iNf4gSkNzW0KlqQm9pkJXYMTnA2Z",
+    host: "localhost",
+    port: "27017",
+    db: "stucoapp"
 }
-// mongoose.set('debug', true);
-mongoose.connect("mongodb://" + mongoLogin.usr + ":" + mongoLogin.pwd + "@localhost:27017/stucoapp");
-var UserModel = require(global.DIR + '/models/user.model');
+mongoose.connect("mongodb://" + mongoLogin.usr + ":" + mongoLogin.pwd + "@" + mongoLogin.host + ":" + mongoLogin.port + "/" + mongoLogin.db);
 
-var userUtils = require(global.DIR + '/userutils');
-var scoreUtils = require(global.DIR + '/scoreutils');
-var badgeUtils = require(global.DIR + '/badgeutils');
 var Utils = require(global.DIR + '/utils');
-var User = require(global.DIR + '/classes/user');
+var User = require(global.DIR + '/models/user.model');
 var Badge = require(global.DIR + '/classes/badge');
 
 // Configure Morgan
 app.use(morgan('dev', {
     skip: function(req, res) {
-        if (req.url == '/api/csgo' && req.method == "POST") {
+        if (req.url === '/api/csgo' && req.method === "POST") {
             return true;
         }
     }
@@ -65,8 +70,11 @@ morgan.token('method', function(req, res) {
     return time + processid + method + space;
 });
 morgan.token('url', function(req, res) {
-    var url = req.originalUrl || req.url,
-        length = 40,
+    var url = req.originalUrl || req.url;
+    if (req.query.authorization) {
+        url = url.substring(0, url.indexOf("authorization=")) + "authorization=***";
+    }
+    var length = 40,
         space = length < url.length ? '' : (Utils.repeatStr(' ', length - url.length));
     return url + space;
 });
@@ -99,8 +107,8 @@ app.use('/res', function(req, res, next) {
 process.on('uncaughtException', function(err) {
     log.error("Fatal Error: Exiting Application");
     log.error(err);
-    log.error(pe.render(err));
-    // fs.writeFileSync(__dirname + "/../private/users.json", JSON.stringify(User.export()), "utf-8");
+    log.error(err.stack);
+    mongoose.connection.close();
 });
 
 // Handle Warnings
@@ -109,4 +117,13 @@ process.on('warning', function(warning) {
 });
 
 // Initialize the server
-require(__dirname + "/server")(app);
+https.createServer({
+    key: fs.readFileSync(global.DIR + "/../private/tls/key.pem", "utf-8"),
+    cert: fs.readFileSync(global.DIR + "/../private/tls/cert.pem", "utf-8"),
+    requestCert: true,
+    passphrase: fs.readFileSync(global.DIR + "/../private/tls/passphrase.txt", "utf-8").toString().trim()
+}, app).listen(global.PORT, function() {
+    log.info('Process ' + process.pid + ' listening on port ' + global.PORT);
+    app.use(helmet());
+    require(global.DIR + "/server")(app);
+});

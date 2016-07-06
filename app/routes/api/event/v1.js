@@ -3,17 +3,15 @@ var router = express.Router({
     mergeParams: true
 });
 var userUtils = require(global.DIR + '/userutils');
-var eventUtils = require(global.DIR + '/eventutils');
 var Utils = require(global.DIR + '/utils');
 var User = require(global.DIR + '/classes/user');
-var Badge = require(global.DIR + '/classes/badge');
 var Event = require(global.DIR + '/classes/event');
 
 router.get(['/events/:limit/:index','/events/:limit', '/events'], function(req, res) {
 	var events = Event.getEvents();
 	var r = [];
 	events.forEach(function (e, i) {
-		if (req.query.data && req.query.data == "all") {
+		if (req.query.data && req.query.data === "all") {
 			r.push(e.object());
 		} else {
 			r.push(e.nice());

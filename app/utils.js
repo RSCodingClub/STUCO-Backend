@@ -22,7 +22,7 @@ module.exports = {
             var locationURL = "https://maps.googleapis.com/maps/api/geocode/json?key=" + global.API_KEY + "&address=" + addressURI;
             request.get(locationURL, function(err, resp, body) {
                 if (err) {
-                    callback(err);
+                    return callback(err);
                 } else {
 					try {
 						var data = JSON.parse(body),
@@ -30,9 +30,9 @@ module.exports = {
                             	lat: data.results[0].geometry.location.lat,
                             	lng: data.results[0].geometry.location.lng
                         	};
-						callback(undefined, r);
+						return callback(undefined, r);
 					} catch (e) {
-						callback(e);
+						return callback(e);
 					}
                 }
             });
@@ -43,7 +43,7 @@ module.exports = {
     getErrorObject: function(err) {
         return {
             error: err.message,
-            errorid: global.ERR_CODES[err.message] ? global.ERR_CODES[err.message] : -1
+            errorid: global.ERR_CODES[err.message] == undefined ? global.ERR_CODES[err.message] : -1
         };
     },
     getUTCOffsetString: function(utcstring) {
@@ -95,7 +95,7 @@ module.exports = {
                     process.exit(0);
                 }
             });
-            callback();
+            return callback();
         }
     }
 };

@@ -123,29 +123,19 @@ var Event = module.exports = function(evnt) {
         _[item.toString().toLowerCase().trim()] = value;
         return this;
     };
-
-    // this.addAttendee = function(subid, callback) {
-    //     var URL = "https://www.googleapis.com/calendar/v3/calendars/" + global.CALENDAR_ID + "/events/" + this.eid + "?key=" + API_KEY;
-    //     if (User.userExists(subid)) {
-    //         var user = User.getUser(subid);
-    //         request.put()
-    //     } else {
-    //         callback(new Error("User Not Found"));
-    //     }
-    // };
     this.onLocation = function(lat, lng, acc, callback) {
-        callback(undefined, true);
+        return callback(undefined, true);
 		// Utils.getLocationFromAddress(_['location'], function(err, location) {
         //     if (err) {
-        //         callback(err);
+        //         return callback(err);
         //     } else {
         //         var dist = Utils.getDistance(location.lat, location.lng, lat, lng);
         //         if (dist + acc < global.ACCEPTABLE_RADIUS) {
-        //             callback(undefined, true);
+        //             return callback(undefined, true);
         //         } else if (dist - acc < global.ACCEPTABLE_RADIUS) {
-        //             callback(undefined, true);
+        //             return callback(undefined, true);
         //         } else {
-        //             callback(undefined, false);
+        //             return callback(undefined, false);
         //         }
         //     }
         // });
@@ -177,7 +167,7 @@ var Event = module.exports = function(evnt) {
                 if (!checkedin) {
                     this.onLocation(lat, lng, 50, function(err, onlocation) {
                         if (err) {
-                            callback(err);
+                            return callback(err);
                         } else {
                             if (onlocation) {
                                 var attendee = {
@@ -195,26 +185,26 @@ var Event = module.exports = function(evnt) {
 									if (err) {
 										console.log("splicing attendee");
 										_['attendees'].splice(_['attendees'].length - 1, 1);
-										callback(err);
+										return callback(err);
 									} else {
 										log.log(user.toString() + " checked into " + _['summary']);
 										// TODO GIVE BADGE AND POINTS TO USER
-										callback(undefined, true);
+										return callback(undefined, true);
 									}
                                 });
                             } else {
-                                callback(new Error("Not At Event Location"));
+                                return callback(new Error("Not At Event Location"));
                             }
                         }
                     });
                 } else {
-                    callback(new Error('Already Checked Into Event'));
+                    return callback(new Error('Already Checked Into Event'));
                 }
             } else {
-                callback(new Error("Not During Event Time"));
+                return callback(new Error("Not During Event Time"));
             }
         } else {
-            callback(new Error("User Not Found"));
+            return callback(new Error("User Not Found"));
         }
     };
 };
@@ -228,28 +218,11 @@ var updateEvents = function(callback) {
             if (events.length > 0) {
                 events.forEach(function(e, i) {
                     var evnt = new Event(e);
-                    callback();
+                    return callback();
                 });
             }
         }
     });
-    // var URL = "https://www.googleapis.com/calendar/v3/calendars/" + CALENDAR_ID + "/events?key=" + API_KEY;
-    // request.get(URL, function(err, res, body) {
-    //     if (err) {
-    //         callback(err);
-    //     } else {
-    //         events = [];
-    //         eventsMap = {};
-    //         var es = JSON.parse(body);
-    //         var calendarTZ = JSON.parse(body).timeZone;
-    //         if (es.items) {
-    //             es.items.forEach(function(e, i) {
-    //                 var evnt = new Event(e);
-    //                 callback();
-    //             });
-    //         }
-    //     }
-    // });
 };
 
 updateEvents(function(err) {
@@ -269,7 +242,7 @@ if (global.ENV == 'developement') {
 } else if (global.ENV == 'production') {
     setInterval(function() {
         var time = new Date().getHours(d.getHours() + (d.getMinutes() / 60));
-        if (time == 14.5 || time == 0) {
+        if (time === 14.5 || time === 0) {
             updateEvents(function(err) {
                 if (err) {
                     log.error(err);

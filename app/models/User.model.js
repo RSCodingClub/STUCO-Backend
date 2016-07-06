@@ -75,14 +75,16 @@ UserSchema.methods.exportUser = function() {
         permissions: this.permissions
     };
 };
+UserSchema.methods.exportAll = function() {
+    return this;
+};
 
 
 // Scores
 UserSchema.methods.giveScore = function(options) {
-	console.log("options", options);
     var score = {
-        type: options.type,
-        value: options.value,
+        type: options.type.toString().trim(),
+        value: isNaN(Number(options.value)) ? 0 : parseInt(options.value),
         timestamp: options.timestamp ? options.timestamp : Date.now()
     };
     if (options.eid) {
@@ -95,17 +97,30 @@ UserSchema.methods.giveScore = function(options) {
     // Badge for 50 points
     if (this.getScore() >= 50) {
         this.giveBadge(22);
+    } else {
+        this.takeBadge(22)
     }
     // Badge for 100 points
     if (this.getScore() >= 100) {
         this.giveBadge(29);
+    } else {
+        this.takeBadge(29);
     }
     return true;
 };
 UserSchema.methods.removeScore = function(t) {
+    var self = this;
     this.scores.forEach(function(score, i) {
-        if (score.timestamp == t) {
-            this.scores.splice(i, 1);
+        if (score.timestamp === t) {
+            self.scores.splice(i, 1);
+
+            if (self.getScore() <= 50) {
+                self.takeBadge(22)
+            }
+            if (self.getScore() <= 100) {
+                self.takeBadge(29);
+            }
+
             return true;
         }
     });
@@ -114,7 +129,7 @@ UserSchema.methods.removeScore = function(t) {
 UserSchema.methods.getScore = function() {
     var total = 0;
     this.scores.forEach(function(score, i) {
-        total += score.value;
+        total += parseInt(score.value);
     });
     return total;
 };
@@ -123,14 +138,14 @@ UserSchema.methods.getScore = function() {
 UserSchema.methods.hasBadge = function(b) {
     var r = false;
     this.badges.forEach(function(o, i) {
-        if (o.toString() == b.toString().trim()) {
+        if (o.toString() === b.toString().trim()) {
             r = true;
         }
     });
     return r;
 };
 UserSchema.methods.giveBadge = function(b) {
-    if (typeof b == "number") {
+    if (typeof b === "number") {
         if (this.hasBadge(b)) {
             return false;
         } else {
@@ -148,9 +163,11 @@ UserSchema.methods.giveBadge = function(b) {
     }
 };
 UserSchema.methods.takeBadge = function(b) {
+    // TODO: Remove scores that badges grant
+    var self = this;
     this.badges.forEach(function(o, i) {
-        if (o == b) {
-            this.badges.splice(i, 1);
+        if (o === b) {
+            self.badges.splice(i, 1);
             return true;
         }
     });
@@ -159,23 +176,30 @@ UserSchema.methods.takeBadge = function(b) {
 
 // Permissions
 UserSchema.methods.hasPermission = function(permission) {
-    var userPerms = this.permissions;
-    var matches = [permission];
-    var permArray = permission.split(".");
-    var r = false;
-    permArray.forEach(function(p, i) {
-        permArray[permArray.length - 1] = "*";
-        matches.push(permArray.join("."));
-        permArray.splice(permArray.length - 1, 1);
-    });
-    matches.push("*");
-    matches.forEach(function(m, i) {
-        userPerms.forEach(function(p, q) {
-            if (m == p) {
-                r = true;
+    var s = process.hrtime();
+    var permSplit = permission.replace("*", "\\*").split("."),
+        start = "(^\\*$",
+        end = ")",
+        r = false;
+    if (permSplit.length > 1) {
+        permSplit.forEach(function(perm, i) {
+            start += "|(" + perm;
+            if (!permission.endsWith(perm)) {
+                start += "\\.(\\*";
+                end = ")" + end;
             }
+            end = ")" + end;
         });
+    }
+    //console.log(start+end);
+    var regex = new RegExp(start + end, "g");
+    this.permissions.forEach(function(perm, i) {
+        if (perm.search(regex) > -1) {
+            r = true;
+        }
     });
+    var time = process.hrtime(s);
+    console.log("hasPermission took " + ((time[0] / 1000) + (time[1] / Math.pow(1 * 10, 6))) + "ms.");
     return r;
 };
 UserSchema.methods.givePermission = function(permission) {
@@ -188,7 +212,7 @@ UserSchema.methods.givePermission = function(permission) {
 };
 UserSchema.methods.removePermission = function(permission) {
     _permissions.forEach(function(p, i) {
-        if (p == permission) {
+        if (p === permission) {
             this.permissions.splice(i, 1);
             return true;
         }
@@ -198,6 +222,7 @@ UserSchema.methods.removePermission = function(permission) {
 
 
 module.exports = User = mongoose.model("User", UserSchema);
+module.exports.schema = UserSchema;
 
 module.exports.userExists = function(subid, callback) {
     this.getUser(subid, function(err, user) {
@@ -219,32 +244,32 @@ module.exports.getUsers = function(callback) {
     User.find({}, callback);
 };
 
-module.exports.createUser = function (guser, callback) {
-	var user = new User({
-		subid: guser.sub.toString().trim(),
-		name: guser.name ? guser.name.toString() : (req.body.nickname ? req.body.nickname.toString().trim() : undefined),
-		nickname: (guser.given_name ? guser.given_name.toString().trim() : (guser.name ? guser.name.toString() : undefined)),
-		email: guser.email,
-		permissions: ["bugreports.create", "user.view.public"]
-	});
-	user.giveBadge(0);
-	user.save(function (err, dbUser) {
-		if (err) {
-			res.statusCode = 500;
-			var e = new Error("Failed to Create User");
-			callback(e);
-		} else {
-			log.info("Welcome " + dbUser.nickname);
-			callback(undefined, dbUser);
-		}
-	});
+module.exports.createUser = function(guser, callback) {
+    var user = new User({
+        subid: guser.sub.toString().trim(),
+        name: guser.name,
+        nickname: guser.given_name,
+        email: guser.email,
+        permissions: ["bugreports.create", "user.view.public"]
+    });
+    user.giveBadge(0);
+    user.save(function(err, dbUser) {
+        if (err) {
+            res.statusCode = 500;
+            var e = new Error("Failed to Create User");
+            return callback(e);
+        } else {
+            // log.info("Welcome " + dbUser.nickname);
+            return callback(undefined, dbUser);
+        }
+    });
 };
 
 module.exports.getLeaderboard = function(callback) {
     var scores = [];
     this.getUsers(function(err, users) {
         if (err) {
-            callback(err);
+            return callback(err);
         } else {
             if (users.length > 0) {
                 users.forEach(function(u, i) {
@@ -260,7 +285,7 @@ module.exports.getLeaderboard = function(callback) {
                     return 0;
                 });
             }
-            callback(undefined, scores);
+            return callback(undefined, scores);
         }
     });
 };

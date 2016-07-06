@@ -5,23 +5,33 @@ var Schema = mongoose.Schema;
 var User = require(global.DIR + '/models/user.model');
 
 var BugreportSchema = new Schema({
-    submitter: User,
+    submitter: {
+        type: String,
+		required: true,
+		unique: false
+    },
     closed: {
         type: Boolean,
         default: false
-    }
+    },
     bugtype: {
         type: String,
-        enum: ["crash", "ui", "event", "other"]
+        enum: {
+            values: "crash,ui,event,other".split(","),
+            message: "Invalid Bug Type"
+        },
+		required: true
     },
     summary: {
         type: String,
-        maxlength: 512
+        maxlength: [512, "Summary is too long"],
+		required: true
     },
     description: {
         type: String,
-        minlength: 16,
-        maxlength: 4096
+        minlength: [16, "Description is too short"],
+        maxlength: [4096, "Description is too long"],
+		required: true
     },
     syslogs: {
         type: String
@@ -42,6 +52,15 @@ BugreportSchema.pre('save', function(next) {
 // Formatting
 BugreportSchema.methods.toString = function() {
     return this.summary.toString().trim();
+};
+
+BugreportSchema.methods.pretty = function() {
+    return {
+        submitter: this.submitter,
+        closed: this.closed,
+        bugtype: this.bugtype,
+        description: this.description
+    }
 };
 
 module.exports = Bugreport = mongoose.model("Bugreport", BugreportSchema);

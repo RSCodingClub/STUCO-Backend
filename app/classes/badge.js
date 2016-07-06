@@ -20,8 +20,8 @@ var Badge = module.exports = function(badge) {
 
     // Constructor
     if (badge) {
-        if (typeof badge == "number" || typeof badge == "string") {
-            this.id = parseInt(badge);
+        if (typeof badge === "number" || typeof badge === "string") {
+            this.id = Number(badge);
             var details = badgeData[badge];
             _name = details.name ? details.name : "";
             _desc = details.desc ? details.desc : "";
@@ -30,7 +30,7 @@ var Badge = module.exports = function(badge) {
             this.valid = true;
         } else if (badge instanceof Badge) {
             return badge;
-        } else if (typeof badge == "object") {
+        } else if (typeof badge === "object") {
             this.id = badge.id;
             _name = badge.name ? badge.name : "";
             _desc = badge.desc ? badge.desc : "";
