@@ -50,22 +50,9 @@ router.get('/:subid/score', function(req, res) {
 router.get('/:subid/scores', function(req, res) {
 	if (req.authorized) {
 		if (req.authorizedUser.hasPermission("user.view.details") || req.authorizedUser.hasPermission("user.view.all") || req.authorizedUser.subid === req.params.subid.toString().trim()) {
-			User.userExists(req.params.subid.toString().trim(), function (exists) {
-				if (exists) {
-					User.getUser(req.params.subid.toString().trim(), function (err, user) {
-						if (err) {
-							res.statusCode = 500;
-							res.json(Utils.getErrorObject(err));
-						} else {
-							res.json(user.scores);
-						}
-					});
-				} else {
-					res.statusCode = 404;
-					var err = new Error("User Not Found");
-					res.json(Utils.getErrorObject(err));
-				}
-			});
+			if (req.verified) {
+				res.json(req.verifiedUser.scores);
+			}
 		} else {
 			res.statusCode = 400;
 			var err = new Error("Permission Requirements Not Met");
@@ -81,33 +68,20 @@ router.get('/:subid/scores', function(req, res) {
 router.put('/:subid/score', function(req, res) {
 	if (req.authorized) {
 		if (req.authorizedUser.hasPermission("user.edit.score")) {
-			User.userExists(req.params.subid.toString().trim(), function (exists) {
-				if (exists) {
-					User.getUser(req.params.subid.toString().trim(), function (err, user) {
-						if (err) {
-							res.statusCode = 500;
-							res.json(Utils.getErrorObject(err));
-						} else {
-							user.giveScore({
-								value: req.body.value ? req.body.value : 0,
-								type: "admin"
-							});
-							user.save(function (err, dbUser) {
-								if (err) {
-									res.statusCode = 500;
-									res.json(Utils.getErrorObject(err));
-								} else {
-									res.send(user.getScore().toString());
-								}
-							});
-						}
-					});
-				} else {
-					res.statusCode = 404;
-					var err = new Error("User Not Found");
-					res.json(Utils.getErrorObject(err));
-				}
-			});
+			if (req.verified) {
+				req.verifiedUser.giveScore({
+					value: req.body.value ? req.body.value : 0,
+					type: "admin"
+				});
+				req.verifiedUser.save(function (err, dbUser) {
+					if (err) {
+						res.statusCode = 500;
+						res.json(Utils.getErrorObject(err));
+					} else {
+						res.send(req.verifiedUser.getScore().toString());
+					}
+				});
+			}
 		} else {
 			res.statusCode = 400;
 			var err = new Error("Permission Requirements Not Met");
@@ -123,35 +97,22 @@ router.put('/:subid/score', function(req, res) {
 router.delete('/:subid/score', function(req, res) {
 	if (req.authorized) {
 		if (req.authorizedUser.hasPermission("user.edit.score")) {
-			User.userExists(req.params.subid.toString().trim(), function (exists) {
-				if (exists) {
-					User.getUser(req.params.subid.toString().trim(), function (err, user) {
+			if (req.verified) {
+				if(req.verifiedUser.removeScore(req.body.timestamp ? req.body.timestamp : Date.now())){
+					var err = new Error("Failed to Edit User");
+					res.statusCode = 400;
+					res.json(Utils.getErrorObject(err));
+				} else {
+					req.verifiedUser.save(function (err, dbUser) {
 						if (err) {
 							res.statusCode = 500;
 							res.json(Utils.getErrorObject(err));
 						} else {
-							if(user.removeScore(req.body.timestamp ? req.body.timestamp : Date.now())){
-								var err = new Error("Failed to Edit User");
-								res.statusCode = 400;
-								res.json(Utils.getErrorObject(err));
-							} else {
-								user.save(function (err, dbUser) {
-									if (err) {
-										res.statusCode = 500;
-										res.json(Utils.getErrorObject(err));
-									} else {
-										res.send(user.getScore().toString());
-									}
-								});
-							}
+							res.send(req.verifiedUser.getScore().toString());
 						}
 					});
-				} else {
-					res.statusCode = 404;
-					var err = new Error("User Not Found");
-					res.json(Utils.getErrorObject(err));
 				}
-			});
+			}
 		} else {
 			res.statusCode = 400;
 			var err = new Error("Permission Requirements Not Met");
@@ -167,22 +128,9 @@ router.delete('/:subid/score', function(req, res) {
 router.get('/:subid/badges', function(req, res) {
 	if (req.authorized) {
 		if (req.authorizedUser.hasPermission("user.view.public") || req.authorizedUser.hasPermission("user.view.details") || req.authorizedUser.hasPermission("user.view.all") || req.authorizedUser.subid === req.params.subid.toString().trim()) {
-			User.userExists(req.params.subid.toString().trim(), function (exists) {
-				if (exists) {
-					User.getUser(req.params.subid.toString().trim(), function (err, user) {
-						if (err) {
-							res.statusCode = 500;
-							res.json(Utils.getErrorObject(err));
-						} else {
-							res.json(user.badges);
-						}
-					});
-				} else {
-					res.statusCode = 404;
-					var err = new Error("User Not Found");
-					res.json(Utils.getErrorObject(err));
-				}
-			});
+			if (req.verified) {
+				res.json(user.badges);
+			}
 		} else {
 			res.statusCode = 400;
 			var err = new Error("Permission Requirements Not Met");
@@ -198,24 +146,16 @@ router.get('/:subid/badges', function(req, res) {
 router.put('/:subid/badge/:bid', function(req, res) {
 	if (req.authorized) {
 		if (req.authorizedUser.hasPermission("user.edit.badge")) {
-			if (req.params.bid)
-			User.userExists(req.params.subid.toString().trim(), function (exists) {
-				if (exists) {
-					User.getUser(req.params.subid.toString().trim(), function (err, user) {
-						if (err) {
-							res.statusCode = 500;
-							res.json(Utils.getErrorObject(err));
-						} else {
-							user.giveBadge(Math.abs(parseInt(req.params.bid.toString().trim())));
-							res.json(user.badges);
-						}
-					});
-				} else {
-					res.statusCode = 404;
-					var err = new Error("User Not Found");
-					res.json(Utils.getErrorObject(err));
-				}
-			});
+			if (req.verified) {
+				req.verifiedUser.giveBadge(Math.abs(Math.trunc(req.params.bid.toString().trim())));
+				req.verifiedUser.save(function (err, dbUser) {
+					if (err) {
+						res.json(Utils.getErrorObject(err));
+					} else {
+						res.json(user.badges);
+					}
+				});
+			}
 		} else {
 			res.statusCode = 400;
 			var err = new Error("Permission Requirements Not Met");
@@ -231,24 +171,16 @@ router.put('/:subid/badge/:bid', function(req, res) {
 router.delete('/:subid/badge/:bid', function(req, res) {
 	if (req.authorized) {
 		if (req.authorizedUser.hasPermission("user.edit.badge")) {
-			if (req.params.bid)
-			User.userExists(req.params.subid.toString().trim(), function (exists) {
-				if (exists) {
-					User.getUser(req.params.subid.toString().trim(), function (err, user) {
-						if (err) {
-							res.statusCode = 500;
-							res.json(Utils.getErrorObject(err));
-						} else {
-							user.takeBadge(Math.abs(parseInt(req.params.bid.toString().trim())));
-							res.json(user.badges);
-						}
-					});
-				} else {
-					res.statusCode = 404;
-					var err = new Error("User Not Found");
-					res.json(Utils.getErrorObject(err));
-				}
-			});
+			if (req.verified) {
+				req.verifiedUser.takeBadge(Math.abs(Math.trunc(req.params.bid.toString().trim())));
+				req.verifiedUser.save(function (err, dbUser) {
+					if (err) {
+						res.json(Utils.getErrorObject(err));
+					} else {
+						res.json(user.badges);
+					}
+				});
+			}
 		} else {
 			res.statusCode = 400;
 			var err = new Error("Permission Requirements Not Met");
@@ -264,22 +196,9 @@ router.delete('/:subid/badge/:bid', function(req, res) {
 router.get('/:subid/public', function(req, res) {
 	if (req.authorized) {
 		if (req.authorizedUser.hasPermission("user.view.public") || req.authorizedUser.hasPermission("user.view.details") || req.authorizedUser.hasPermission("user.view.all") || req.authorizedUser.subid === req.params.subid.toString().trim()) {
-			User.userExists(req.params.subid.toString().trim(), function (exists) {
-				if (exists) {
-					User.getUser(req.params.subid.toString().trim(), function (err, user) {
-						if (err) {
-							res.statusCode = 500;
-							res.json(Utils.getErrorObject(err));
-						} else {
-							res.json(user.getPublicUser());
-						}
-					});
-				} else {
-					res.statusCode = 404;
-					var err = new Error("User Not Found");
-					res.json(Utils.getErrorObject(err));
-				}
-			});
+			if (req.verified) {
+				res.json(req.verifiedUser.getPublicUser());
+			}
 		} else {
 			res.statusCode = 400;
 			var err = new Error("Permission Requirements Not Met");
@@ -295,22 +214,9 @@ router.get('/:subid/public', function(req, res) {
 router.get('/:subid/details', function(req, res) {
 	if (req.authorized) {
 		if (req.authorizedUser.hasPermission("user.view.details") || req.authorizedUser.hasPermission("user.view.all") || req.authorizedUser.subid === req.params.subid.toString().trim()) {
-			User.userExists(req.params.subid.toString().trim(), function (exists) {
-				if (exists) {
-					User.getUser(req.params.subid.toString().trim(), function (err, user) {
-						if (err) {
-							res.statusCode = 500;
-							res.json(Utils.getErrorObject(err));
-						} else {
-							res.json(user.exportUser());
-						}
-					});
-				} else {
-					res.statusCode = 404;
-					var err = new Error("User Not Found");
-					res.json(Utils.getErrorObject(err));
-				}
-			});
+			if (req.verified) {
+				res.json(req.verifiedUser.exportUser());
+			}
 		} else {
 			res.statusCode = 400;
 			var err = new Error("Permission Requirements Not Met");
@@ -326,22 +232,9 @@ router.get('/:subid/details', function(req, res) {
 router.get('/:subid/all', function(req, res) {
 	if (req.authorized) {
 		if (req.authorizedUser.hasPermission("user.view.all")) {
-			User.userExists(req.params.subid.toString().trim(), function (exists) {
-				if (exists) {
-					User.getUser(req.params.subid.toString().trim(), function (err, user) {
-						if (err) {
-							res.statusCode = 500;
-							res.json(Utils.getErrorObject(err));
-						} else {
-							res.json(user.exportUser());
-						}
-					});
-				} else {
-					res.statusCode = 404;
-					var err = new Error("User Not Found");
-					res.json(Utils.getErrorObject(err));
-				}
-			});
+			if (req.verified) {
+				res.json(req.verifiedUser.exportAll());
+			}
 		} else {
 			res.statusCode = 400;
 			var err = new Error("Permission Requirements Not Met");
@@ -363,22 +256,9 @@ router.get('/:subid/attending/:eid', function(req, res) {
 router.get('/:subid/name', function (req, res) {
 	if (req.authorized) {
 		if (req.authorizedUser.hasPermission("user.view.public") || req.authorizedUser.subid === req.params.subid.toString().trim()) {
-			User.userExists(req.params.subid.toString().trim(), function (exists) {
-				if (exists) {
-					User.getUser(req.params.subid.toString().trim(), function (err, user) {
-						if (err) {
-							res.statusCode = 500;
-							res.json(Utils.getErrorObject(err));
-						} else {
-							res.send(user.name);
-						}
-					});
-				} else {
-					res.statusCode = 404;
-					var err = new Error("User Not Found");
-					res.json(Utils.getErrorObject(err));
-				}
-			});
+			if (req.verified) {
+				res.send(req.verifiedUser.name);
+			}
 		} else {
 			res.statusCode = 400;
 			var err = new Error("Permission Requirements Not Met");
@@ -392,34 +272,19 @@ router.get('/:subid/name', function (req, res) {
 });
 
 router.put('/:subid/name', function (req, res) {
-	// Request Body (x-www-form-urlencoded)
-	// [name]
 	if (req.authorized) {
 		if (req.authorizedUser.hasPermission("user.edit.name") || req.authorizedUser.subid === req.params.subid.toString().trim()) {
-			User.userExists(req.params.subid.toString().trim(), function (exists) {
-				if (exists) {
-					User.getUser(req.params.subid.toString().trim(), function (err, user) {
-						if (err) {
-							res.statusCode = 500;
-							res.json(Utils.getErrorObject(err));
-						} else {
-							if (req.body.name) {
-								user.name = req.body.name.toString().trim();
-								user.save(function (err, dbUser) {
-									res.send(dbUser.name);
-								});
-							} else {
-								var err = new Error("Invalid Request Parameters");
-								res.json(Utils.getErrorObject(err));
-							}
-						}
+			if (req.verified) {
+				if (req.body.name) {
+					req.verifiedUser.name = req.body.name.toString().trim();
+					req.verifiedUser.save(function (err, dbUser) {
+						res.send(dbUser.name);
 					});
 				} else {
-					res.statusCode = 404;
-					var err = new Error("User Not Found");
+					var err = new Error("Invalid Request Parameters");
 					res.json(Utils.getErrorObject(err));
 				}
-			});
+			}
 		} else {
 			res.statusCode = 400;
 			var err = new Error("Permission Requirements Not Met");
@@ -435,22 +300,9 @@ router.put('/:subid/name', function (req, res) {
 router.get('/:subid/nickname', function (req, res) {
 	if (req.authorized) {
 		if (req.authorizedUser.hasPermission("user.view.public") || req.authorizedUser.subid === req.params.subid.toString().trim()) {
-			User.userExists(req.params.subid.toString().trim(), function (exists) {
-				if (exists) {
-					User.getUser(req.params.subid.toString().trim(), function (err, user) {
-						if (err) {
-							res.statusCode = 500;
-							res.json(Utils.getErrorObject(err));
-						} else {
-							res.send(user.nickname);
-						}
-					});
-				} else {
-					res.statusCode = 404;
-					var err = new Error("User Not Found");
-					res.json(Utils.getErrorObject(err));
-				}
-			});
+			if (req.verified) {
+				res.send(req.verifiedUser.nickname);
+			}
 		} else {
 			res.statusCode = 400;
 			var err = new Error("Permission Requirements Not Met");
@@ -464,34 +316,19 @@ router.get('/:subid/nickname', function (req, res) {
 });
 
 router.put('/:subid/nickname', function (req, res) {
-	// Request Body (x-www-form-urlencoded)
-	// [nickname]
 	if (req.authorized) {
 		if (req.authorizedUser.hasPermission("user.edit.nickname") || req.authorizedUser.subid === req.params.subid.toString().trim()) {
-			User.userExists(req.params.subid.toString().trim(), function (exists) {
-				if (exists) {
-					User.getUser(req.params.subid.toString().trim(), function (err, user) {
-						if (err) {
-							res.statusCode = 500;
-							res.json(Utils.getErrorObject(err));
-						} else {
-							if (req.body.nickname) {
-								user.nickname = req.body.nickname.toString().trim();
-								user.save(function (err, dbUser) {
-									res.send(dbUser.nickname);
-								});
-							} else {
-								var err = new Error("Invalid Request Parameters");
-								res.json(Utils.getErrorObject(err));
-							}
-						}
+			if (req.verified) {
+				if (req.body.nickname) {
+					req.verifiedUser.nickname = req.body.nickname.toString().trim();
+					req.verifiedUser.save(function (err, dbUser) {
+						res.send(dbUser.nickname);
 					});
 				} else {
-					res.statusCode = 404;
-					var err = new Error("User Not Found");
+					var err = new Error("Invalid Request Parameters");
 					res.json(Utils.getErrorObject(err));
 				}
-			});
+			}
 		} else {
 			res.statusCode = 400;
 			var err = new Error("Permission Requirements Not Met");

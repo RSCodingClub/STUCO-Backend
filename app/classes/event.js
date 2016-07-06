@@ -2,7 +2,7 @@ var request = require('request');
 var googleUtils = require(global.DIR + '/googleutils');
 var log = require('log-util');
 var Utils = require(global.DIR + '/utils');
-var User = require(global.DIR + '/classes/user');
+var User = require(global.DIR + '/models/user.model');
 
 var events = [];
 var eventMap = {};
