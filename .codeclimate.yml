@@ -8,8 +8,20 @@ engines:
         checks:
             radix:
                 enabled: false
+            complexity:
+                enabled: false
     duplication:
         enabled: true
         config:
             languages:
                 - javascript
+ratings:
+    paths:
+        - "**.inc"
+        - "**.js"
+        - "**.jsx"
+        - "**.module"
+        - "**.php"
+        - "**.py"
+        - "**.rb"
+exclude_paths: []

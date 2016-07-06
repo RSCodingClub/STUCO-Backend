@@ -33,7 +33,7 @@ module.exports.getEvents = function (options, callback) {
 		            callback(err);
 		        } else {
 					log.info("Loaded " + resp.items.length + " events.");
-					callback(undefined, resp.items ? resp.items : []);
+					return callback(undefined, resp.items ? resp.items : []);
 				}
 		    });
 		}
@@ -71,7 +71,7 @@ module.exports.updateEvent = function (eid, eventDetails, callback) {
 			request.put(params, function (err, resp, body) {
 				log.debug(err, body);
 				log.warn(require('util').inspect(params.body, {showHidden: false, depth: null}));
-				callback(err, resp);
+				return callback(err, resp);
 			});
 
 			 console.log(tokens);
@@ -86,7 +86,7 @@ module.exports.updateEvent = function (eid, eventDetails, callback) {
 		    //     if (err) {
 		    //         callback(err);
 		    //     } else {
-			// 		callback(undefined, resp);
+			// 		return callback(undefined, resp);
 			// 	}
 		    // });
 		}

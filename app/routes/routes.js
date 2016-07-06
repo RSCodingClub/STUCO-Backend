@@ -91,7 +91,7 @@ router.post(['/submitbug', '/createbugreport', '/submitreport', '/bugreport', '/
     // {bugtype, summary, description, syslogs, applogs}
     if (req.authorized) {
         if (req.authorizedUser.hasPermission("bugreports.create")) {
-            if (req.body.bugtype == undefined || req.body.summary == undefined || req.body.summary.trim() == "" || req.body.description == undefined || req.body.description == "") {
+            if (req.body.bugtype === undefined || req.body.summary === undefined || req.body.summary.trim() === "" || req.body.description === undefined || req.body.description === "") {
                 res.statusCode = 400;
                 var err = new Error("Invalid Request Parameters");
                 res.json(Utils.getErrorObject(err));

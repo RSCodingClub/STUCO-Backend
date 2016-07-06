@@ -17,7 +17,7 @@ module.exports = {
     },
     getLocationFromAddress: function(address, callback) {
         log.verbose("getLocationFromAddress(" + address + ", " + typeof callback + ")");
-        if (typeof callback == "function") {
+        if (typeof callback === "function") {
             var addressURI = encodeURIComponent(address.toString());
             var locationURL = "https://maps.googleapis.com/maps/api/geocode/json?key=" + global.API_KEY + "&address=" + addressURI;
             request.get(locationURL, function(err, resp, body) {
@@ -43,7 +43,7 @@ module.exports = {
     getErrorObject: function(err) {
         return {
             error: err.message,
-            errorid: global.ERR_CODES[err.message] == undefined ? global.ERR_CODES[err.message] : -1
+            errorid: global.ERR_CODES[err.message] === undefined ? global.ERR_CODES[err.message] : -1
         };
     },
     getUTCOffsetString: function(utcstring) {
@@ -52,8 +52,8 @@ module.exports = {
         global.TZ.forEach(function(tz, i) {
             if (tz.utc) {
                 tz.utc.forEach(function(utc, o) {
-                    if (utc == utcstring) {
-                        offset == tz;
+                    if (utc === utcstring) {
+                        offset === tz;
                     }
                 });
             }
