@@ -2,7 +2,7 @@ var request = require('request');
 var expect = require('chai').expect;
 var assert = require('chai').assert;
 
-var host = "http://localhost:80";
+var host = "http://itotallyrock.cf:80";
 var url = host + "/api/";
 
 describe('Get Leaderboard', function () {
