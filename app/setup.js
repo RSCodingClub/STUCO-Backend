@@ -7,6 +7,7 @@ var format = require('dateformat'),
     bodyParser = require('body-parser'),
     methodOverride = require('method-override'),
     log = require('log-util'),
+	http = require('http'),
     https = require('https'),
     express = require('express'),
     app = express(),
@@ -116,7 +117,7 @@ process.on('warning', function(warning) {
     log.warn(warning);
 });
 
-// Initialize the server
+// Initialize the HTTPS server
 https.createServer({
     key: fs.readFileSync(global.DIR + "/../private/tls/key.pem", "utf-8"),
     cert: fs.readFileSync(global.DIR + "/../private/tls/cert.pem", "utf-8"),
@@ -125,5 +126,10 @@ https.createServer({
 }, app).listen(global.PORT, function() {
     log.info('Process ' + process.pid + ' listening on port ' + global.PORT);
     app.use(helmet());
+    require(global.DIR + "/server")(app);
+});
+http.createServer(app).listen(80, function() {
+    log.info('Process ' + process.pid + ' listening on port ' + 80);
+    // app.use(helmet());
     require(global.DIR + "/server")(app);
 });
