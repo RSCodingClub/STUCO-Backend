@@ -1,6 +1,6 @@
 engines:
-    nodesecurity:
-        enabled: true
+#    nodesecurity:
+#        enabled: true
     fixme:
         enabled: true
     eslint:
@@ -24,4 +24,6 @@ ratings:
         - "**.php"
         - "**.py"
         - "**.rb"
-exclude_paths: []
+exclude_paths:
+    - "res/"
+    - "private/"
