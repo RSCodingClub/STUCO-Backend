@@ -18,7 +18,7 @@ router.param("subid", function (req, res, next, subid) {
 				} else {
 					req.verified = true;
 					req.verifiedUser = user;
-					next();
+					return next();
 				}
 			});
 		} else {
@@ -278,7 +278,11 @@ router.put('/:subid/name', function (req, res) {
 				if (req.body.name) {
 					req.verifiedUser.name = req.body.name.toString().trim();
 					req.verifiedUser.save(function (err, dbUser) {
-						res.send(dbUser.name);
+						if (err) {
+							res.json(Utils.getErrorObject(err));
+						} else {
+							res.send(dbUser.name);
+						}
 					});
 				} else {
 					var err = new Error("Invalid Request Parameters");
@@ -322,7 +326,11 @@ router.put('/:subid/nickname', function (req, res) {
 				if (req.body.nickname) {
 					req.verifiedUser.nickname = req.body.nickname.toString().trim();
 					req.verifiedUser.save(function (err, dbUser) {
-						res.send(dbUser.nickname);
+						if (err) {
+							res.json(Utils.getErrorObject(err));
+						} else {
+							res.send(dbUser.nickname);
+						}
 					});
 				} else {
 					var err = new Error("Invalid Request Parameters");

@@ -95,7 +95,7 @@ var Badge = module.exports = function(badge) {
     };
 };
 
-(function() {
+(function(){
     var r = []
     badgeData.forEach(function(b, i) {
         var badge = new Badge(b);

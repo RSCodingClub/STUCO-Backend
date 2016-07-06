@@ -92,7 +92,7 @@ module.exports = {
         } else {
             process.on('message', function(message) {
                 if (message.type === 'shutdown') {
-                    process.exit(0);
+                    throw new Error("Shutdown Error");
                 }
             });
             return callback();

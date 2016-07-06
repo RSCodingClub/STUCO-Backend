@@ -52,9 +52,9 @@ var userUtils = module.exports = {
                     if (decodedToken.payload.email.endsWith("@rsdmo.org") && decodedToken.payload.email_verified) {
                         var time = process.hrtime(s);
                         log.verbose("Verify Token took\t" + ((time[0] / 1000) + (time[1] / Math.pow(1 * 10, 6))) + "ms.");
-                        callback(undefined, decodedToken);
+                        return callback(undefined, decodedToken);
                     } else {
-                        callback(new Error("Invalid Email Domain"));
+                        return callback(new Error("Invalid Email Domain"));
                     }
                 }
             });
@@ -65,7 +65,7 @@ var userUtils = module.exports = {
     getGoogleCertificates: function(kid, callback) {
         var s = process.hrtime();
         certRequests++;
-        if (googleCertificates == undefined || certRequests % 32 == 0) {
+        if (googleCertificates === undefined || certRequests % 32 === 0) {
             request({
                 uri: 'https://www.googleapis.com/oauth2/v1/certs'
             }, function(err, res, body) {
@@ -86,7 +86,7 @@ var userUtils = module.exports = {
         } else {
             var time = process.hrtime(s);
             log.verbose("Get Google Certificates took\t" + ((time[0] / 1000) + (time[1] / Math.pow(1 * 10, 6))) + "ms.");
-            callback(null, googleCertificates);
+            return callback(null, googleCertificates);
         }
     },
     getGoogleUser: function(subid, callback) {

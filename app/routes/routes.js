@@ -49,7 +49,7 @@ router.use(function(req, res, next) {
                             }
                             var time = process.hrtime(s);
                             log.verbose("Authorize User took\t" + ((time[0] / 1000) + (time[1] / Math.pow(1 * 10, 6))) + "ms.");
-                            next();
+                            return next();
                         });
                     } else {
                         // Create User
@@ -61,7 +61,7 @@ router.use(function(req, res, next) {
                             }
                             var time = process.hrtime(s);
                             log.verbose("Authorize User took\t" + ((time[0] / 1000) + (time[1] / Math.pow(1 * 10, 6))) + "ms.");
-                            next();
+                            return next();
                         });
                     }
                 });

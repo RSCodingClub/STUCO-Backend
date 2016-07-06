@@ -1,6 +1,6 @@
 engines:
-#    nodesecurity:
-#        enabled: true
+    nodesecurity:
+        enabled: true
     fixme:
         enabled: true
     eslint:
@@ -9,6 +9,8 @@ engines:
             radix:
                 enabled: false
             complexity:
+                enabled: false
+            global-require:
                 enabled: false
     duplication:
         enabled: true

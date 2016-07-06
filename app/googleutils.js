@@ -17,7 +17,7 @@ module.exports.getEvents = function (options, callback) {
 	log.verbose("getEvents(" + typeof callback + ")");
 	authClient.authorize(function(err, tokens) {
 	    if (err) {
-	        callback(err);
+	        return callback(err);
 	    } else {
 			var params = {
 		        auth: authClient,
@@ -30,7 +30,7 @@ module.exports.getEvents = function (options, callback) {
 			}
 			calendar.events.list(params, function(err, resp) {
 		        if (err) {
-		            callback(err);
+		            return callback(err);
 		        } else {
 					log.info("Loaded " + resp.items.length + " events.");
 					return callback(undefined, resp.items ? resp.items : []);
@@ -56,7 +56,7 @@ module.exports.updateEvent = function (eid, eventDetails, callback) {
 	log.verbose("updateEvent("+eid + ", " + JSON.stringify(eventDetails).substring(0, 10) + "... , " + typeof callback +")");
 	authClient.authorize(function(err, tokens) {
 	    if (err) {
-	        callback(err);
+	        return callback(err);
 	    } else {
 			var url = "https://www.googleapis.com/calendar/v3/calendars/"+ global.CALENDAR_ID +"/events/" + eid + "?key=" + global.API_KEY
 			var params = {
@@ -67,14 +67,14 @@ module.exports.updateEvent = function (eid, eventDetails, callback) {
 				body: eventDetails,
 				json: true
 			};
-			console.log("URL URL URL", url);
+			//console.log("URL URL URL", url);
 			request.put(params, function (err, resp, body) {
 				log.debug(err, body);
-				log.warn(require('util').inspect(params.body, {showHidden: false, depth: null}));
+				//log.warn(require('util').inspect(params.body, {showHidden: false, depth: null}));
 				return callback(err, resp);
 			});
 
-			 console.log(tokens);
+			// console.log(tokens);
 			// calendar.events.update({
 		    //     auth: authClient,
 			// 	calendarId: global.CALENDAR_ID,
@@ -84,7 +84,7 @@ module.exports.updateEvent = function (eid, eventDetails, callback) {
 		    // }, function(err, resp) {
 			// 	log.debug(err, resp)
 		    //     if (err) {
-		    //         callback(err);
+		    //         return callback(err);
 		    //     } else {
 			// 		return callback(undefined, resp);
 			// 	}
