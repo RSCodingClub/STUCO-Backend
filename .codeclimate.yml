@@ -1,6 +1,6 @@
 engines:
-#    nodesecurity:
-#        enabled: true
+    nodesecurity:
+        enabled: true
     fixme:
         enabled: true
     eslint:
@@ -13,7 +13,7 @@ engines:
             global-require:
                 enabled: false
     duplication:
-        enabled: true
+        enabled: false
         config:
             languages:
                 - javascript
