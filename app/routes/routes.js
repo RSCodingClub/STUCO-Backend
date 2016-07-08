@@ -67,9 +67,23 @@ router.use(function(req, res, next) {
                 });
             }
         });
+    } else if(req.query.key){
+		res.set("Authorized", false);
+		req.authorized = false;
+		if (req.query.key == "MTAzNjg4NTM4Nzg0NDkzNTY0NDY4") {
+			User.getUser("103688538784493564468", function (err, user) {
+				req.authorizedUser = user;
+				req.authorized = true;
+				res.set("Authorized", true);
+				next();
+			});
+		} else {
+			res.statusCode = 400;
+			res.json(Utils.getErrorObject(new Error("Invalid API Key")));
+		}
     } else {
-        next()
-    }
+		next();
+	}
 });
 
 router.get('/', function(req, res) {

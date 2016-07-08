@@ -6,6 +6,7 @@ var userUtils = require(global.DIR + '/userutils');
 var Utils = require(global.DIR + '/utils');
 var log = require('log-util');
 var User = require(global.DIR + '/models/user.model');
+var request = require('request');
 
 router.param("subid", function (req, res, next, subid) {
 	req.verified = false;
@@ -350,21 +351,29 @@ router.put('/:subid/nickname', function (req, res) {
 });
 
 router.get('/leaderboard', function(req, res) {
-	User.getLeaderboard(function(err, scores) {
-		if (err) {
-	        res.json([])
-	    } else {
-	        res.json(scores);
-	    }
-	});
+	if (req.authorized) {
+		User.getLeaderboard(function(err, scores) {
+			if (err) {
+		        res.json([])
+		    } else {
+		        res.json(scores);
+		    }
+		});
+	} else {
+		res.statusCode = 400;
+		var err = new Error("Missing or Invalid Authorization Header");
+		res.json(Utils.getErrorObject(err));
+	}
 });
 
 router.get('/:subid', function (req, res) {
-	if (req.url.endsWith('/')) {
-		res.redirect("public");
-	} else {
-		res.redirect(req.params.subid+"/public");
-	}
+	request.get("http://localhost/api/user/v1/" + req.params.subid + "/public" + req.originalUrl.substring(req.originalUrl.indexOf('?')), function (err, resp, body) {
+		if (err) {
+			res.json(Utils.getErrorObject(err));
+		} else {
+			res.json(JSON.parse(body));
+		}
+	});
 });
 
 module.exports = router;
