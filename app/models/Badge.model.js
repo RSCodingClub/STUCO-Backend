@@ -10,15 +10,15 @@ var BadgeSchema = new Schema({
     name: {
         type: String,
         maxlength: 64
-    }
+    },
     desc: {
         type: String,
         maxlength: 64
-    }
+    },
     earn: {
         type: String,
         maxlength: 64
-    }
+    },
     reward: {
         type: Number
     }

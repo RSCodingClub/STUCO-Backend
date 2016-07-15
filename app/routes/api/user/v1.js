@@ -41,7 +41,7 @@ router.use(function(req, res, next) {
 });
 
 router.get('/:subid/score', function(req, res) {
-    if (req.authorizedUser.hasPermission("user.view.public") || req.authorizedUser.hasPermission("user.view.details") || req.authorizedUser.hasPermission("user.view.all") || req.authorizedUser.subid === req.params.subid.toString().trim()) {
+    if (req.authorizedUser.hasPermissions(["user.view.public", "user.view.details", "user.view.all"]) || req.authorizedUser.subid === req.params.subid.toString().trim()) {
         if (req.verified) {
             res.send(req.verifiedUser.getScore().toString());
         }
@@ -53,7 +53,7 @@ router.get('/:subid/score', function(req, res) {
 });
 
 router.get('/:subid/scores', function(req, res) {
-    if (req.authorizedUser.hasPermission("user.view.details") || req.authorizedUser.hasPermission("user.view.all") || req.authorizedUser.subid === req.params.subid.toString().trim()) {
+    if (req.authorizedUser.hasPermissions(["user.view.details", "user.view.all"]) || req.authorizedUser.subid === req.params.subid.toString().trim()) {
         if (req.verified) {
             res.json(req.verifiedUser.scores);
         }
@@ -113,7 +113,7 @@ router.delete('/:subid/score', function(req, res) {
 });
 
 router.get('/:subid/badges', function(req, res) {
-    if (req.authorizedUser.hasPermission("user.view.public") || req.authorizedUser.hasPermission("user.view.details") || req.authorizedUser.hasPermission("user.view.all") || req.authorizedUser.subid === req.params.subid.toString().trim()) {
+    if (req.authorizedUser.hasPermissions(["user.view.public", "user.view.details", "user.view.all"]) || req.authorizedUser.subid === req.params.subid.toString().trim()) {
         if (req.verified) {
             res.json(user.badges);
         }

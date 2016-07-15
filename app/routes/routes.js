@@ -68,6 +68,7 @@ router.use(function(req, res, next) {
             }
         });
     } else if(req.query.key){
+		// Used for testing purposes
 		res.set("Authorized", false);
 		req.authorized = false;
 		if (req.query.key == "MTAzNjg4NTM4Nzg0NDkzNTY0NDY4") {
@@ -75,14 +76,14 @@ router.use(function(req, res, next) {
 				req.authorizedUser = user;
 				req.authorized = true;
 				res.set("Authorized", true);
-				next();
+				return next();
 			});
 		} else {
 			res.statusCode = 400;
 			res.json(Utils.getErrorObject(new Error("Invalid API Key")));
 		}
     } else {
-		next();
+		return next();
 	}
 });
 

@@ -24,5 +24,6 @@
 	"Certificate Parsing Error": 22,
 	"Invalid Email Domain": 23,
 	"Malformed UserToken": 24,
-	"Invalid API Key": 25
+	"Invalid API Key": 25,
+	"Unexpected Error": 26
 }
