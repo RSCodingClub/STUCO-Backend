@@ -46,3 +46,9 @@ module.exports.getBadges = function (callback) {
 		return callback(err, badges);
 	});
 }
+
+module.exports.getBadge = function (bid, callback) {
+	Badge.findOne({bid: bid}, function (err, badge) {
+		return callback(err, badge);
+	});
+}

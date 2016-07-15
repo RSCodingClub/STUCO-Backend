@@ -2,3 +2,4 @@
 nodemon.json
 /private
 *.log
+.gitignore
