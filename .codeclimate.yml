@@ -13,7 +13,7 @@ engines:
             global-require:
                 enabled: false
     duplication:
-        enabled: false
+        enabled: true
         config:
             languages:
                 - javascript
