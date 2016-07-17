@@ -69,7 +69,7 @@ var userUtils = module.exports = {
             request({
                 uri: 'https://www.googleapis.com/oauth2/v1/certs'
             }, function(err, res, body) {
-                if (err || !res || res.statusCode != 200) {
+                if (err || !res || res.statusCode !== 200) {
                     err = err || new Error("Google Certificates Retrieval Error");
                     return callback(err);
                 } else {

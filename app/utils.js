@@ -53,7 +53,7 @@ module.exports = {
             if (tz.utc) {
                 tz.utc.forEach(function(utc, o) {
                     if (utc === utcstring) {
-                        offset === tz;
+                        offset = tz;
                     }
                 });
             }

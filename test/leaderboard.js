@@ -25,13 +25,13 @@ describe("Test Obtaining the Leaderboard", function () {
 
 	describe('Unauthenticated', function () {
 		it("returns status 400", function (done) {
-			request.get(url + "user/v1/leaderboard?key=" + "abc123", function (err, res, body) {
+			request.get(url + "user/v1/leaderboard?key=abc123", function (err, res, body) {
 				expect(res.statusCode).to.equal(400);
 				done(err);
 			});
 		});
 		it("returns an error object", function (done) {
-			request.get(url + "user/v1/leaderboard?key=" + "abc123", function (err, res, body) {
+			request.get(url + "user/v1/leaderboard?key=abc123", function (err, res, body) {
 				// expect(JSON.parse(body)).to.be.an("object");
 				assert((JSON.parse(body)) instanceof ({}).constructor, "Failed to return an error object");
 				done(err);

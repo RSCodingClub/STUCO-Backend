@@ -26,13 +26,13 @@ describe("Test Getting User Information", function () {
 	});
 	describe('Unauthenticated', function () {
 		it("should return 400 status", function (done) {
-			request.get(url + "user/v1/" + TEST_USER + "/public?key=" + "abc", function (err, res, body) {
+			request.get(url + "user/v1/" + TEST_USER + "/public?key=abc", function (err, res, body) {
 				expect(res.statusCode).to.equal(400);
 				done(err);
 			});
 		});
 		it("returns a json user object", function (done) {
-			request.get(url + "user/v1/" + TEST_USER + "/public?key=" + "abc", function (err, res, body) {
+			request.get(url + "user/v1/" + TEST_USER + "/public?key=abc", function (err, res, body) {
 				expect(JSON.parse(body)).to.have.property('errorid');
 				expect(JSON.parse(body)).to.not.have.property('subid');
 				done(err);
