@@ -33,16 +33,14 @@ router.get(['/details/:eid', '/event/:eid'], function(req, res) {
 		res.json(evnt.object());
 	} else {
 		res.statusCode = 400;
-		var	err = new Error("Event Not Found")
-		res.json(Utils.getErrorObject(err));
+		res.json(Utils.getErrorObject(new Error("Event Not Found")));
 	}
 });
 
 router.post(['/onlocation/:eid'], function(req, res) {
     if (!req.body.latitude || !req.body.longitude || !req.body.accuracy) {
         res.statusCode = 400;
-        var err = new Error("Invalid Location Data")
-		res.json(Utils.getErrorObject(err));
+		res.json(Utils.getErrorObject(new Error("Invalid Location Data")));
     } else {
 		req.body.accuracy = req.body.accuracy > global.MAX_ACC ? global.MAX_ACC : Math.abs(req.body.accuracy);
 		if (Event.eventExists(req.params.eid.toString().trim())) {
@@ -56,8 +54,7 @@ router.post(['/onlocation/:eid'], function(req, res) {
 			});
 		} else {
 			res.statusCode = 404;
-			var err = new Error("Event Not Found");
-			res.json(Utils.getErrorObject(err));
+			res.json(Utils.getErrorObject(new Error("Event Not Found")));
 		}
     }
 });
@@ -91,8 +88,7 @@ router.post('/checkin/:eid', function(req, res) {
 	// 			});
 	// 		} else {
 	// 			res.statusCode = 400;
-	// 			var err = new Error("Event Not Found");
-	// 			res.json(Utils.getErrorObject(err));
+	// 			res.json(Utils.getErrorObject(new Error("Event Not Found")));
 	// 		}
     //     }
     // });

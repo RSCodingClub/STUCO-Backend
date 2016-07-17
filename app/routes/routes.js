@@ -71,7 +71,8 @@ router.use(function(req, res, next) {
 		// Used for testing purposes
 		res.set("Authorized", false);
 		req.authorized = false;
-		if (req.query.key == "MTAzNjg4NTM4Nzg0NDkzNTY0NDY4") {
+		// NOTE: Temporary code to allow for testing authoirzed requests
+		if (req.query.key === "MTAzNjg4NTM4Nzg0NDkzNTY0NDY4") {
 			User.getUser("103688538784493564468", function (err, user) {
 				req.authorizedUser = user;
 				req.authorized = true;
@@ -108,8 +109,7 @@ router.post(['/submitbug', '/createbugreport', '/submitreport', '/bugreport', '/
         if (req.authorizedUser.hasPermission("bugreports.create")) {
             if (req.body.bugtype === undefined || req.body.summary === undefined || req.body.summary.trim() === "" || req.body.description === undefined || req.body.description === "") {
                 res.statusCode = 400;
-                var err = new Error("Invalid Request Parameters");
-                res.json(Utils.getErrorObject(err));
+                res.json(Utils.getErrorObject(new Error("Invalid Request Parameters")));
             } else {
                 var bug = new Bugreport({
                     submitter: req.authorizedUser.subid,
@@ -143,13 +143,11 @@ router.post(['/submitbug', '/createbugreport', '/submitreport', '/bugreport', '/
             }
         } else {
             res.statusCode = 400;
-            var err = new Error("Permission Requirements Not Met");
-            res.json(Utils.getErrorObject(err));
+            res.json(Utils.getErrorObject(new Error("Permission Requirements Not Met")));
         }
     } else {
         res.statusCode = 400;
-        var err = new Error("Missing or Invalid Authorization Header");
-        res.json(Utils.getErrorObject(err));
+        res.json(Utils.getErrorObject(new Error("Missing or Invalid Authorization Header")));
     }
 });
 
