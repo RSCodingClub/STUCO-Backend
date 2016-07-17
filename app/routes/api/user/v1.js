@@ -32,7 +32,7 @@ router.param("subid", function(req, res, next, subid) {
 
 router.use(function(req, res, next) {
     if (req.authorized) {
-        next();
+        return next();
     } else {
         res.statusCode = 400;
         var err = new Error("Missing or Invalid Authorization Header");
@@ -41,7 +41,7 @@ router.use(function(req, res, next) {
 });
 
 router.get('/:subid/score', function(req, res) {
-    if (req.authorizedUser.hasPermissions(["user.view.public", "user.view.details", "user.view.all"]) || req.authorizedUser.subid === req.params.subid.toString().trim()) {
+    if (req.authorizedUser.hasPermissions(["user.view.public", "user.view.details", "user.view.all"]) || req.authorizedUser.subid === req.verifiedUser.subid) {
         if (req.verified) {
             res.send(req.verifiedUser.getScore().toString());
         }
@@ -53,7 +53,7 @@ router.get('/:subid/score', function(req, res) {
 });
 
 router.get('/:subid/scores', function(req, res) {
-    if (req.authorizedUser.hasPermissions(["user.view.details", "user.view.all"]) || req.authorizedUser.subid === req.params.subid.toString().trim()) {
+    if (req.authorizedUser.hasPermissions(["user.view.details", "user.view.all"]) || req.authorizedUser.subid === req.verifiedUser.subid) {
         if (req.verified) {
             res.json(req.verifiedUser.scores);
         }
@@ -107,13 +107,12 @@ router.delete('/:subid/score', function(req, res) {
         }
     } else {
         res.statusCode = 400;
-        var err = new Error("Permission Requirements Not Met");
-        res.json(Utils.getErrorObject(err));
+        res.json(Utils.getErrorObject(new Error("Permission Requirements Not Met")));
     }
 });
 
 router.get('/:subid/badges', function(req, res) {
-    if (req.authorizedUser.hasPermissions(["user.view.public", "user.view.details", "user.view.all"]) || req.authorizedUser.subid === req.params.subid.toString().trim()) {
+    if (req.authorizedUser.hasPermissions(["user.view.public", "user.view.details", "user.view.all"]) || req.authorizedUser.subid === req.verifiedUser.subid) {
         if (req.verified) {
             res.json(user.badges);
         }
@@ -163,7 +162,7 @@ router.delete('/:subid/badge/:bid', function(req, res) {
 });
 
 router.get('/:subid/public', function(req, res) {
-    if (req.authorizedUser.hasPermission("user.view.public") || req.authorizedUser.hasPermission("user.view.details") || req.authorizedUser.hasPermission("user.view.all") || req.authorizedUser.subid === req.params.subid.toString().trim()) {
+    if (req.authorizedUser.hasPermissions(["user.view.public","user.view.details","user.view.all"]) || req.authorizedUser.subid === req.verifiedUser.subid) {
         if (req.verified) {
             res.json(req.verifiedUser.getPublicUser());
         }
@@ -175,7 +174,7 @@ router.get('/:subid/public', function(req, res) {
 });
 
 router.get('/:subid/details', function(req, res) {
-    if (req.authorizedUser.hasPermission("user.view.details") || req.authorizedUser.hasPermission("user.view.all") || req.authorizedUser.subid === req.params.subid.toString().trim()) {
+    if (req.authorizedUser.hasPermissions(["user.view.details","user.view.all"]) || req.authorizedUser.subid === req.verifiedUser.subid) {
         if (req.verified) {
             res.json(req.verifiedUser.exportUser());
         }
@@ -205,7 +204,7 @@ router.get('/:subid/attending/:eid', function(req, res) {
 });
 
 router.get('/:subid/name', function(req, res) {
-    if (req.authorizedUser.hasPermission("user.view.public") || req.authorizedUser.subid === req.params.subid.toString().trim()) {
+    if (req.authorizedUser.hasPermission("user.view.public") || req.authorizedUser.subid === req.verifiedUser.subid) {
         if (req.verified) {
             res.send(req.verifiedUser.name);
         }
@@ -217,7 +216,7 @@ router.get('/:subid/name', function(req, res) {
 });
 
 router.put('/:subid/name', function(req, res) {
-    if (req.authorizedUser.hasPermission("user.edit.name") || req.authorizedUser.subid === req.params.subid.toString().trim()) {
+    if (req.authorizedUser.hasPermission("user.edit.name") || req.authorizedUser.subid === req.verifiedUser.subid) {
         if (req.verified) {
             if (req.body.name) {
                 req.verifiedUser.name = req.body.name.toString().trim();
@@ -235,13 +234,12 @@ router.put('/:subid/name', function(req, res) {
         }
     } else {
         res.statusCode = 400;
-        var err = new Error("Permission Requirements Not Met");
-        res.json(Utils.getErrorObject(err));
+        res.json(Utils.getErrorObject(new Error("Permission Requirements Not Met")));
     }
 });
 
 router.get('/:subid/nickname', function(req, res) {
-    if (req.authorizedUser.hasPermission("user.view.public") || req.authorizedUser.subid === req.params.subid.toString().trim()) {
+    if (req.authorizedUser.hasPermission("user.view.public") || req.authorizedUser.subid === req.verifiedUser.subid) {
         if (req.verified) {
             res.send(req.verifiedUser.nickname);
         }
@@ -253,7 +251,7 @@ router.get('/:subid/nickname', function(req, res) {
 });
 
 router.put('/:subid/nickname', function(req, res) {
-    if (req.authorizedUser.hasPermission("user.edit.nickname") || req.authorizedUser.subid === req.params.subid.toString().trim()) {
+    if (req.authorizedUser.hasPermission("user.edit.nickname") || req.authorizedUser.subid === req.verifiedUser.subid) {
         if (req.verified) {
             if (req.body.nickname) {
                 req.verifiedUser.nickname = req.body.nickname.toString().trim();
@@ -271,8 +269,7 @@ router.put('/:subid/nickname', function(req, res) {
         }
     } else {
         res.statusCode = 400;
-        var err = new Error("Permission Requirements Not Met");
-        res.json(Utils.getErrorObject(err));
+        res.json(Utils.getErrorObject(new Error("Permission Requirements Not Met")));
     }
 });
 
