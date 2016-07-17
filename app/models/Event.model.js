@@ -22,9 +22,9 @@ var EventSchema = new Schema({
 		type: String,
 		default: "",
 		maxlength: 1024
-	}
+	},
 	eventtype: {
-		type: String
+		type: String,
 		enum: ["football", "homecominggame", "homecomingdance", "baseball", "basketball", "softball", "tennis", "lacrosse", "artshow", "theater", "choir", "band", "orchestra", "fieldhokey", "hockey", "waterpolo", "swimming", "club", "peprally", "dollardance", "winterdance", "orientation", "icecreamsocial", "trunkortreat", "cocoandcramming", "other"]
 	},
 	location: {
@@ -43,12 +43,12 @@ var EventSchema = new Schema({
 	},
 	start: {
 		type: Date,
-		required: true,
+		required: true
 	},
 	end: {
 		type: Date,
 		required: true
-	}
+	},
 	attendees: {
 		type: Array,
 		default: []
@@ -64,7 +64,7 @@ EventSchema.pre('save', function(next) {
     if (!this.created_at) {
 		this.created_at = new Date();
 	}
-    next();
+    return next();
 });
 
 // Formatting
@@ -117,11 +117,11 @@ module.exports.createEvent = function(a, callback) {
 						end: new Date(_['end'].dateTime ? _['end'].dateTime : (_['end'].date + "T00:00:00" + Utils.getUTCOffsetString(_['end'].timeZone ? _['end'].timeZone : calendarTZ))),
 					};
 					var e = new Evnt(r);
-					e.save(callback);
+					return e.save(callback);
 				}
 			});
 		} else {
-			callback(new Error("Event Already Exists"));
+			return callback(new Error("Event Already Exists"));
 		}
 	};
 };
@@ -137,15 +137,15 @@ module.exports.eventExists = function(subid, callback) {
 };
 
 module.exports.getEvent = function(eid, callback) {
-    Evnt.findOne({
+    return Evnt.findOne({
         eid: eid
     }, callback);
 };
 
 module.exports.getEvents = function(callback) {
-    Evnt.find({}, callback);
+    return Evnt.find({}, callback);
 };
 
 module.exports.getActiveEvents = function (callback) {
-	Evnt.find({}).where('end').gt(new Date()).sort('+start').exec(callback);
+	return Evnt.find({}).where('end').gt(new Date()).sort('+start').exec(callback);
 };

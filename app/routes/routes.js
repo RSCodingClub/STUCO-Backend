@@ -36,7 +36,7 @@ router.use(function(req, res, next) {
         userUtils.verifyToken(token.substring("Token ".length), function(err, guser) {
             if (err) {
                 res.statusCode = 400;
-                res.json(Utils.getErrorObject(err));
+                return res.json(Utils.getErrorObject(err));
             } else {
                 // TODO ADD QUOTA CHECKING
                 User.userExists(guser.payload.sub.toString().trim(), function(exists) {
@@ -67,40 +67,44 @@ router.use(function(req, res, next) {
                 });
             }
         });
-    } else if(req.query.key){
-		// Used for testing purposes
-		res.set("Authorized", false);
-		req.authorized = false;
-		// NOTE: Temporary code to allow for testing authoirzed requests
-		if (req.query.key === "MTAzNjg4NTM4Nzg0NDkzNTY0NDY4") {
-			User.getUser("103688538784493564468", function (err, user) {
-				req.authorizedUser = user;
-				req.authorized = true;
-				res.set("Authorized", true);
-				return next();
-			});
-		} else {
-			res.statusCode = 400;
-			res.json(Utils.getErrorObject(new Error("Invalid API Key")));
-		}
+    } else if (req.query.key) {
+        // Used for testing purposes
+        res.set("Authorized", false);
+        req.authorized = false;
+        // NOTE: Temporary code to allow for testing authoirzed requests
+        if (req.query.key === "MTAzNjg4NTM4Nzg0NDkzNTY0NDY4") {
+            User.getUser("103688538784493564468", function(err, user) {
+                if (err) {
+                    return res.json(Utils.getErrorObject(new Error("Unexpected Error")));
+                } else {
+                    req.authorizedUser = user;
+                    req.authorized = true;
+                    res.set("Authorized", true);
+                    return next();
+                }
+            });
+        } else {
+            res.statusCode = 400;
+            return res.json(Utils.getErrorObject(new Error("Invalid API Key")));
+        }
     } else {
-		return next();
-	}
+        return next();
+    }
 });
 
 router.get('/', function(req, res) {
     fs.readFile(global.DIR + '/../res/views/index.html', 'utf-8', function(err, body) {
         if (err) {
             res.statusCode = 500;
-            res.send("An unexpected error occurred.");
+            return res.send("An unexpected error occurred.");
         } else {
-            res.send(body);
+            return res.send(body);
         }
     });
 });
 
 router.get(['/submitbug', '/createbugreport', '/submitreport', '/bugreport', '/bug'], function(req, res) {
-    res.send("Please submit bug reports through the app.");
+    return res.send("Please submit bug reports through the app.");
 });
 
 router.post(['/submitbug', '/createbugreport', '/submitreport', '/bugreport', '/bug'], function(req, res) {
@@ -109,7 +113,7 @@ router.post(['/submitbug', '/createbugreport', '/submitreport', '/bugreport', '/
         if (req.authorizedUser.hasPermission("bugreports.create")) {
             if (req.body.bugtype === undefined || req.body.summary === undefined || req.body.summary.trim() === "" || req.body.description === undefined || req.body.description === "") {
                 res.statusCode = 400;
-                res.json(Utils.getErrorObject(new Error("Invalid Request Parameters")));
+                return res.json(Utils.getErrorObject(new Error("Invalid Request Parameters")));
             } else {
                 var bug = new Bugreport({
                     submitter: req.authorizedUser.subid,
@@ -123,7 +127,7 @@ router.post(['/submitbug', '/createbugreport', '/submitreport', '/bugreport', '/
                     if (err) {
                         console.error(err, err.stack);
                         res.statusCode = 500;
-                        res.json(Utils.getErrorObject(err));
+                        return res.json(Utils.getErrorObject(err));
                     } else {
                         var r = github.issues.create({
                             user: "RSCodingClub",
@@ -133,9 +137,9 @@ router.post(['/submitbug', '/createbugreport', '/submitreport', '/bugreport', '/
                             labels: [req.body.bugtype]
                         }, function(err, resp) {
                             if (err) {
-                                res.json(Utils.getErrorObject(err));
+                                return res.json(Utils.getErrorObject(err));
                             } else {
-                                res.json(dbBug.pretty());
+                                return res.json(dbBug.pretty());
                             }
                         });
                     }
@@ -143,11 +147,11 @@ router.post(['/submitbug', '/createbugreport', '/submitreport', '/bugreport', '/
             }
         } else {
             res.statusCode = 400;
-            res.json(Utils.getErrorObject(new Error("Permission Requirements Not Met")));
+            return res.json(Utils.getErrorObject(new Error("Permission Requirements Not Met")));
         }
     } else {
         res.statusCode = 400;
-        res.json(Utils.getErrorObject(new Error("Missing or Invalid Authorization Header")));
+        return res.json(Utils.getErrorObject(new Error("Missing or Invalid Authorization Header")));
     }
 });
 

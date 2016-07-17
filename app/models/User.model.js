@@ -47,8 +47,7 @@ UserSchema.pre('save', function(next) {
         this.created_at = new Date();
         this.lastlogin = new Date();
     }
-
-    next();
+    return next();
 });
 
 // Formatting
@@ -246,13 +245,13 @@ module.exports.userExists = function(subid, callback) {
 };
 
 module.exports.getUser = function(subid, callback) {
-    User.findOne({
+    return User.findOne({
         subid: subid
     }, callback);
 };
 
 module.exports.getUsers = function(callback) {
-    User.find({}, callback);
+    return User.find({}, callback);
 };
 
 module.exports.createUser = function(guser, callback) {
