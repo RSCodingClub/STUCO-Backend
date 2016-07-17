@@ -201,17 +201,17 @@ UserSchema.methods.hasPermission = function(permission) {
     console.log("hasPermission took " + ((time[0] / 1000) + (time[1] / Math.pow(1 * 10, 6))) + "ms.");
     return r;
 };
-UserSchema.methods.hasPermissions = function (permissions) {
-	if ((permissions) instanceof Array) {
-		var r = false;
-		permissions.forEach(function (perm, i) {
-			if (this.hasPermission(perm)) {
-				r = true;
-			}
-		});
-		return r;
-	}
-},
+UserSchema.methods.hasPermissions = function(permissions) {
+    if ((permissions) instanceof Array) {
+        var r = false;
+        permissions.forEach(function(perm, i) {
+            if (this.hasPermission(perm)) {
+                r = true;
+            }
+        });
+        return r;
+    }
+};
 UserSchema.methods.givePermission = function(permission) {
     if (this.hasPermission(permission)) {
         return false;

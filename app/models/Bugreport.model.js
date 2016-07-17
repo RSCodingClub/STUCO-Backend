@@ -7,8 +7,8 @@ var User = require(global.DIR + '/models/user.model');
 var BugreportSchema = new Schema({
     submitter: {
         type: String,
-		required: true,
-		unique: false
+        required: true,
+        unique: false
     },
     closed: {
         type: Boolean,
@@ -20,18 +20,18 @@ var BugreportSchema = new Schema({
             values: "crash,ui,event,other".split(","),
             message: "Invalid Bug Type"
         },
-		required: true
+        required: true
     },
     summary: {
         type: String,
         maxlength: [512, "Summary is too long"],
-		required: true
+        required: true
     },
     description: {
         type: String,
         minlength: [16, "Description is too short"],
         maxlength: [4096, "Description is too long"],
-		required: true
+        required: true
     },
     syslogs: {
         type: String

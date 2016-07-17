@@ -24,16 +24,16 @@ module.exports = {
                 if (err) {
                     return callback(err);
                 } else {
-					try {
-						var data = JSON.parse(body),
-							r = {
-                            	lat: data.results[0].geometry.location.lat,
-                            	lng: data.results[0].geometry.location.lng
-                        	};
-						return callback(undefined, r);
-					} catch (e) {
-						return callback(e);
-					}
+                    try {
+                        var data = JSON.parse(body),
+                            r = {
+                                lat: data.results[0].geometry.location.lat,
+                                lng: data.results[0].geometry.location.lng
+                            };
+                        return callback(undefined, r);
+                    } catch (e) {
+                        return callback(e);
+                    }
                 }
             });
         } else {

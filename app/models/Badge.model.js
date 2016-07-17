@@ -41,14 +41,16 @@ BadgeSchema.methods.toString = function() {
 module.exports = Badge = mongoose.model("Badge", BadgeSchema);
 module.exports.schema = BadgeSchema;
 
-module.exports.getBadges = function (callback) {
-	Badge.find({}, function (err, badges) {
-		return callback(err, badges);
-	});
+module.exports.getBadges = function(callback) {
+    Badge.find({}, function(err, badges) {
+        return callback(err, badges);
+    });
 }
 
-module.exports.getBadge = function (bid, callback) {
-	Badge.findOne({bid: bid}, function (err, badge) {
-		return callback(err, badge);
-	});
+module.exports.getBadge = function(bid, callback) {
+    Badge.findOne({
+        bid: bid
+    }, function(err, badge) {
+        return callback(err, badge);
+    });
 }

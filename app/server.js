@@ -18,9 +18,9 @@ var routes = {
 };
 
 module.exports = function(app) {
-	User.getUsers(function (err, users) {
-		log.info("Storing Data for " + (err ? 0 : users.length) + " users");
-	});
+    User.getUsers(function(err, users) {
+        log.info("Storing Data for " + (err ? 0 : users.length) + " users");
+    });
 
     app.use('/', routes.index);
 
@@ -28,7 +28,7 @@ module.exports = function(app) {
     app.use('/api/badge/v1/', routes.apis.badge.v1);
     app.use('/api/event/v1/', routes.apis.events.v1);
 
-	log.info('Routes are now defined');
+    log.info('Routes are now defined');
 
-	var evnt = new Event();
+    var evnt = new Event();
 };

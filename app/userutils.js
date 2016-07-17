@@ -60,8 +60,8 @@ var userUtils = module.exports = {
             });
         });
     },
-	// Verify Google Certificates every 32nd request
-	// Cuts back reponse time of requests by 90ms
+    // Verify Google Certificates every 32nd request
+    // Cuts back reponse time of requests by 90ms
     getGoogleCertificates: function(kid, callback) {
         var s = process.hrtime();
         certRequests++;
@@ -89,18 +89,18 @@ var userUtils = module.exports = {
             return callback(null, googleCertificates);
         }
     },
-	needsPermission: function (user, permissions, callback) {
-		if (typeof permissions === "string") {
-			permissions = [permissions];
-		}
-		if (user.hasPermissions(permissions)){
-			return callback(true);
-		} else {
-			res.statusCode = 400;
-	        var err = new Error("Permission Requirements Not Met");
-	        return res.json(Utils.getErrorObject(err));
-		}
-	},
+    needsPermission: function(user, permissions, callback) {
+        if (typeof permissions === "string") {
+            permissions = [permissions];
+        }
+        if (user.hasPermissions(permissions)) {
+            return callback(true);
+        } else {
+            res.statusCode = 400;
+            var err = new Error("Permission Requirements Not Met");
+            return res.json(Utils.getErrorObject(err));
+        }
+    },
     getGoogleUser: function(subid, callback) {
         log.verbose("getGoogleUser(" + subid + ", " + typeof callback + ")");
         var baseUrl = "https://www.googleapis.com/plus/v1/people/" + subid + "?key=" + global.API_KEY;
