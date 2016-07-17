@@ -71,14 +71,9 @@ router.put('/:subid/score', function(req, res) {
                 value: req.body.value ? req.body.value : 0,
                 type: "admin"
             });
-            req.verifiedUser.save(function(err, dbUser) {
-                if (err) {
-                    res.statusCode = 500;
-                    return res.json(Utils.getErrorObject(err));
-                } else {
-                    return res.send(req.verifiedUser.getScore().toString());
-                }
-            });
+			userUtils.saveUser(req.verifiedUser, function (dbUser) {
+				return res.send(req.verifiedUser.getScore().toString());
+			}, res)
         }
     } else {
         res.statusCode = 400;

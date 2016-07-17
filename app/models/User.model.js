@@ -174,43 +174,59 @@ UserSchema.methods.takeBadge = function(b) {
 };
 
 // Permissions
-UserSchema.methods.hasPermission = function(permission) {
+UserSchema.methods.hasPermission = function(neededPermissions) {
     var s = process.hrtime();
-    var permSplit = permission.replace("*", "\\*").split("."),
-        start = "(^\\*$",
-        end = ")",
-        r = false;
-    if (permSplit.length > 1) {
-        permSplit.forEach(function(perm, i) {
-            start += "|(" + perm;
-            if (!permission.endsWith(perm)) {
-                start += "\\.(\\*";
-                end = ")" + end;
-            }
-            end = ")" + end;
-        });
-    }
-    //console.log(start+end);
-    var regex = new RegExp(start + end, "g");
-    this.permissions.forEach(function(perm, i) {
-        if (perm.search(regex) > -1) {
-            r = true;
-        }
-    });
-    var time = process.hrtime(s);
-    console.log("hasPermission took " + ((time[0] / 1000) + (time[1] / Math.pow(1 * 10, 6))) + "ms.");
-    return r;
+	var self = this;
+    if (!((neededPermissions) instanceof Array)) {
+		neededPermissions = [permission]
+	}
+	console.log("Needed\t[", ...neededPermissions, "]");
+	console.log("Current\t[", ...self.permissions, "]");
+	var r = false;
+	neededPermissions.forEach(function(needed, i) {
+		var permSplit = needed.replace("*", "\\*").split("."),
+	        start = "(^\\*$",
+	        end = ")",
+	        r = false;
+	    if (permSplit.length > 1) {
+	        permSplit.forEach(function(perm, i) {
+	            start += "|(" + perm;
+	            if (!needed.endsWith(perm)) {
+	                start += "\\.(\\*";
+	                end = ")" + end;
+	            }
+	            end = ")" + end;
+	        });
+	    }
+		console.log("Regex\t", start + end);
+	    //console.log(start+end);
+	    var regex = new RegExp(start + end, "g");
+	    self.permissions.forEach(function(perm, i) {
+	        if (perm.search(regex) > -1) {
+	            r = true;
+	        }
+	    });
+	    var time = process.hrtime(s);
+	    console.log("hasPermission took " + ((time[0] / 1000) + (time[1] / Math.pow(1 * 10, 6))) + "ms.");
+	});
+	var time2 = process.hrtime(s);
+	console.log("hasPermissions took " + ((time2[0] / 1000) + (time2[1] / Math.pow(1 * 10, 6))) + "ms.");
+	return r;
+};
+UserSchema.methods.hasPermissionRegex = function(permissions) {
+	// Example /(^\*$|(user\.(\*|(view\.(\*|(details)|(public)|(all))))))/g
+	// Checks for user.view.[details,public,all]
+	let r = false,
+		self = this;
+	self.permissions.forEach(function(perm, i) {
+		if (perm.search(regex) > -1) {
+			r = true;
+		}
+	});
+	return r;
 };
 UserSchema.methods.hasPermissions = function(permissions) {
-    if ((permissions) instanceof Array) {
-        var r = false;
-        permissions.forEach(function(perm, i) {
-            if (this.hasPermission(perm)) {
-                r = true;
-            }
-        });
-        return r;
-    }
+	this.hasPermission(permissions)
 };
 UserSchema.methods.givePermission = function(permission) {
     if (this.hasPermission(permission)) {
