@@ -29,3 +29,4 @@ ratings:
 exclude_paths:
     - "res/"
     - "private/"
+    - "app/classes/"
