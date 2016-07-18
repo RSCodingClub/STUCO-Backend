@@ -91,18 +91,6 @@ var userUtils = module.exports = {
             return callback(null, googleCertificates);
         }
     },
-    needsPermission: function(user, permissions, callback) {
-        if (typeof permissions === "string") {
-            permissions = [permissions];
-        }
-        if (user.hasPermissions(permissions)) {
-            return callback(true);
-        } else {
-            res.statusCode = 400;
-            var err = new Error("Permission Requirements Not Met");
-            return res.json(Utils.getErrorObject(err));
-        }
-    },
 	saveUser: function (user, success, res) {
 		user.save(function (err, dbUser) {
 			if (err) {

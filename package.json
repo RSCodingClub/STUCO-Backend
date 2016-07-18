@@ -22,6 +22,7 @@
     "mocha": "^2.5.3",
     "mongoose": "^4.5.2",
     "morgan": "^1.7.0",
+    "permission": "^1.0.4",
     "request": "^2.72.0",
     "validator": "^5.4.0"
   }

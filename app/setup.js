@@ -12,7 +12,8 @@ var format = require('dateformat'),
     express = require('express'),
     app = express(),
     mongoose = require('mongoose'),
-    helmet = require('helmet');
+    helmet = require('helmet'),
+	permission = require('permission');
 
 log.setDateFormat("HH:MM:ss");
 
@@ -102,6 +103,31 @@ app.use(express.static(global.DIR + '/../res'));
 app.use('/res', function(req, res, next) {
     res.setHeader("Cache-Control", "max-age=86400");
     next();
+});
+app.set('permission', {
+    after: function(req, res, next, authStatus) {
+		console.log("AFTER");
+        if (authStatus === permission.AUTHORIZED || authStatus === permission.NOT_AUTHORIZED){
+			console.log("Authenticated");
+			if (req.verified) {
+				req.isSelf = (req.user.subid === req.verifiedUser.subid);
+			}
+            if (authStatus === permission.AUTHORIZED) {
+				console.log("Authoirzed");
+				return next();
+			} else {
+				console.log("Unauthorized");
+				res.statusCode = 400;
+		        var err = new Error("Permission Requirements Not Met");
+		        return res.json(Utils.getErrorObject(err));
+			}
+        } else if (authStatus === permission.NOT_AUTHENTICATED) {
+			console.log("Unauthenticated");
+			res.statusCode = 400;
+	        var err = new Error("Missing or Invalid Authentication Header");
+	        return res.json(Utils.getErrorObject(err));
+		}
+    }
 });
 
 // Handle Uncaught Exceptions

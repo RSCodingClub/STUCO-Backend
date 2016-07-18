@@ -14,6 +14,7 @@ var routes = {
             v1: require(global.DIR + "/routes/api/event/v1")
         }
     },
+	auth: require(global.DIR + "/routes/auth"),
     index: require(global.DIR + "/routes/routes")
 };
 
@@ -22,6 +23,7 @@ module.exports = function(app) {
         log.info("Storing Data for " + (err ? 0 : users.length) + " users");
     });
 
+	app.use('/api', routes.auth);
     app.use('/', routes.index);
 
     app.use('/api/user/v1/', routes.apis.user.v1);

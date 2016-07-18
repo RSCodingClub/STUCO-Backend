@@ -35,9 +35,10 @@ var UserSchema = new Schema({
         type: Array,
         default: []
     },
-    permissions: {
-        type: Array,
-        default: ["user.view.public", "bugreports.create"]
+    role: {
+        type: String,
+		enum: ["student", "tester", "teacher", "stuco", "developer", "admin"],
+        default: ["student"]
     }
 });
 
@@ -71,7 +72,7 @@ UserSchema.methods.exportUser = function() {
         email: this.email,
         scores: this.scores,
         badges: this.badges,
-        permissions: this.permissions
+        role: this.role
     };
 };
 UserSchema.methods.exportAll = function() {
@@ -95,22 +96,26 @@ UserSchema.methods.giveScore = function(options) {
     this.scores.push(score);
     // Badge for 50 points
     if (this.getScore() >= 50) {
-        this.giveBadge(22);
+        setTimeout(this.giveBadge(22), 500);
     } else {
         this.takeBadge(22)
     }
     // Badge for 100 points
     if (this.getScore() >= 100) {
-        this.giveBadge(29);
+        setTimeout(this.giveBadge(29), 1000);
     } else {
         this.takeBadge(29);
     }
     return true;
 };
 UserSchema.methods.removeScore = function(t) {
-    var self = this;
+	console.log("REMOVE SCORE");
+    var self = this,
+		r = false;
     this.scores.forEach(function(score, i) {
-        if (score.timestamp === t) {
+		console.log("SCORE["+i+"] = "+ score.timestamp, score.timestamp == t);
+        if (score.timestamp == t) {
+			console.log("EQUALS");
             self.scores.splice(i, 1);
 
             if (self.getScore() <= 50) {
@@ -120,10 +125,10 @@ UserSchema.methods.removeScore = function(t) {
                 self.takeBadge(29);
             }
 
-            return true;
+            r = true;
         }
     });
-    return false;
+    return r;
 };
 UserSchema.methods.getScore = function() {
     var total = 0;
@@ -173,80 +178,6 @@ UserSchema.methods.takeBadge = function(b) {
     return false;
 };
 
-// Permissions
-UserSchema.methods.hasPermission = function(neededPermissions) {
-    var s = process.hrtime();
-	var self = this;
-    if (!((neededPermissions) instanceof Array)) {
-		neededPermissions = [permission]
-	}
-	console.log("Needed\t[", ...neededPermissions, "]");
-	console.log("Current\t[", ...self.permissions, "]");
-	var r = false;
-	neededPermissions.forEach(function(needed, i) {
-		var permSplit = needed.replace("*", "\\*").split("."),
-	        start = "(^\\*$",
-	        end = ")",
-	        r = false;
-	    if (permSplit.length > 1) {
-	        permSplit.forEach(function(perm, i) {
-	            start += "|(" + perm;
-	            if (!needed.endsWith(perm)) {
-	                start += "\\.(\\*";
-	                end = ")" + end;
-	            }
-	            end = ")" + end;
-	        });
-	    }
-		console.log("Regex\t", start + end);
-	    //console.log(start+end);
-	    var regex = new RegExp(start + end, "g");
-	    self.permissions.forEach(function(perm, i) {
-	        if (perm.search(regex) > -1) {
-	            r = true;
-	        }
-	    });
-	    var time = process.hrtime(s);
-	    console.log("hasPermission took " + ((time[0] / 1000) + (time[1] / Math.pow(1 * 10, 6))) + "ms.");
-	});
-	var time2 = process.hrtime(s);
-	console.log("hasPermissions took " + ((time2[0] / 1000) + (time2[1] / Math.pow(1 * 10, 6))) + "ms.");
-	return r;
-};
-UserSchema.methods.hasPermissionRegex = function(permissions) {
-	// Example /(^\*$|(user\.(\*|(view\.(\*|(details)|(public)|(all))))))/g
-	// Checks for user.view.[details,public,all]
-	let r = false,
-		self = this;
-	self.permissions.forEach(function(perm, i) {
-		if (perm.search(regex) > -1) {
-			r = true;
-		}
-	});
-	return r;
-};
-UserSchema.methods.hasPermissions = function(permissions) {
-	this.hasPermission(permissions)
-};
-UserSchema.methods.givePermission = function(permission) {
-    if (this.hasPermission(permission)) {
-        return false;
-    } else {
-        this.permissions.push(permission);
-        return true;
-    }
-};
-UserSchema.methods.removePermission = function(permission) {
-    _permissions.forEach(function(p, i) {
-        if (p === permission) {
-            this.permissions.splice(i, 1);
-            return true;
-        }
-    });
-    return false;
-};
-
-
 module.exports = User = mongoose.model("User", UserSchema);
 module.exports.schema = UserSchema;
 
@@ -276,7 +207,7 @@ module.exports.createUser = function(guser, callback) {
         name: guser.name,
         nickname: guser.given_name,
         email: guser.email,
-        permissions: ["bugreports.create", "user.view.public"]
+        role: "student"
     });
     user.giveBadge(0);
     user.save(function(err, dbUser) {
@@ -285,7 +216,7 @@ module.exports.createUser = function(guser, callback) {
             var e = new Error("Failed to Create User");
             return callback(e);
         } else {
-            // log.info("Welcome " + dbUser.nickname);
+            log.info("Welcome " + dbUser.nickname);
             return callback(undefined, dbUser);
         }
     });

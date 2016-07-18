@@ -28,71 +28,8 @@ github.authenticate({
     password: "codingclub1"
 });
 
-router.use(function(req, res, next) {
-    if ((req.headers.authorization && req.headers.authorization.startsWith("Token ")) || (req.query.authorization && req.query.authorization.startsWith("Token "))) {
-        var token = req.headers.authorization ? req.headers.authorization : req.query.authorization;
-        res.set("Authorized", false);
-        var s = process.hrtime();
-        userUtils.verifyToken(token.substring("Token ".length), function(err, guser) {
-            if (err) {
-                res.statusCode = 400;
-                return res.json(Utils.getErrorObject(err));
-            } else {
-                // TODO ADD QUOTA CHECKING
-                User.userExists(guser.payload.sub.toString().trim(), function(exists) {
-                    if (exists) {
-                        User.getUser(guser.payload.sub.toString().trim(), function(err, user) {
-                            if (!err) {
-                                req.authorizedUser = user;
-                                req.authorized = true;
-                                res.set("Authorized", true);
-                            }
-                            var time = process.hrtime(s);
-                            log.verbose("Authorize User took\t" + ((time[0] / 1000) + (time[1] / Math.pow(1 * 10, 6))) + "ms.");
-                            return next();
-                        });
-                    } else {
-                        // Create User
-                        User.createUser(guser, function(err, dbuser) {
-                            if (!err) {
-                                req.authorizedUser = dbUser;
-                                req.authorized = true;
-                                res.set("Authorized", true);
-                            }
-                            var time = process.hrtime(s);
-                            log.verbose("Authorize User took\t" + ((time[0] / 1000) + (time[1] / Math.pow(1 * 10, 6))) + "ms.");
-                            return next();
-                        });
-                    }
-                });
-            }
-        });
-    } else if (req.query.key) {
-        // Used for testing purposes
-        res.set("Authorized", false);
-        req.authorized = false;
-        // NOTE: Temporary code to allow for testing authoirzed requests
-        if (req.query.key === "MTAzNjg4NTM4Nzg0NDkzNTY0NDY4") {
-            User.getUser("103688538784493564468", function(err, user) {
-                if (err) {
-                    return res.json(Utils.getErrorObject(new Error("Unexpected Error")));
-                } else {
-                    req.authorizedUser = user;
-                    req.authorized = true;
-                    res.set("Authorized", true);
-                    return next();
-                }
-            });
-        } else {
-            res.statusCode = 400;
-            return res.json(Utils.getErrorObject(new Error("Invalid API Key")));
-        }
-    } else {
-        return next();
-    }
-});
-
 router.get('/', function(req, res) {
+	console.log(req.isAuthenticated());
     fs.readFile(global.DIR + '/../res/views/index.html', 'utf-8', function(err, body) {
         if (err) {
             res.statusCode = 500;
@@ -103,20 +40,16 @@ router.get('/', function(req, res) {
     });
 });
 
-router.get(['/submitbug', '/createbugreport', '/submitreport', '/bugreport', '/bug'], function(req, res) {
-    return res.send("Please submit bug reports through the app.");
-});
-
 router.post(['/submitbug', '/createbugreport', '/submitreport', '/bugreport', '/bug'], function(req, res) {
     // {bugtype, summary, description, syslogs, applogs}
-    if (req.authorized) {
-        if (req.authorizedUser.hasPermission("bugreports.create")) {
+    if (req.authenticated) {
+        if (req.user.hasPermission("bugreports.create")) {
             if (req.body.bugtype === undefined || req.body.summary === undefined || req.body.summary.trim() === "" || req.body.description === undefined || req.body.description === "") {
                 res.statusCode = 400;
                 return res.json(Utils.getErrorObject(new Error("Invalid Request Parameters")));
             } else {
                 var bug = new Bugreport({
-                    submitter: req.authorizedUser.subid,
+                    submitter: req.user.subid,
                     bugtype: req.body.bugtype,
                     summary: req.body.summary,
                     description: req.body.description,

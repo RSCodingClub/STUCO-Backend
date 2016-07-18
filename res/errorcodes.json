@@ -18,7 +18,7 @@
 	"Badge Not Found": 16,
 	"DeprecationWarning": 17,
 	"Invalid Request Parameters": 18,
-	"Missing or Invalid Authorization Header": 19,
+	"Missing or Invalid Authentication Header": 19,
 	"Failed to Edit User": 20,
 	"Google Certificates Retrieval Error": 21,
 	"Certificate Parsing Error": 22,
