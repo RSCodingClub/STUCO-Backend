@@ -74,6 +74,7 @@ router.put('/:subid/score', require('permission')(["developer", "admin"]), funct
     }
 });
 router.delete('/:subid/score', require('permission')(["developer", "admin"]), function(req, res) {
+	// TODO: FIXME
 	console.log("1");
     if (req.verified) {
 		console.log("2");
