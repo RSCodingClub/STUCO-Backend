@@ -37,7 +37,7 @@ var UserSchema = new Schema({
     },
     role: {
         type: String,
-		enum: ["student", "tester", "teacher", "stuco", "developer", "admin"],
+        enum: ["student", "tester", "teacher", "stuco", "developer", "admin"],
         default: ["student"]
     }
 });
@@ -82,40 +82,44 @@ UserSchema.methods.exportAll = function() {
 
 // Scores
 UserSchema.methods.giveScore = function(options) {
-    var score = {
-        type: options.type.toString().trim(),
-        value: isNaN(Number(options.value)) ? 0 : parseInt(options.value),
-        timestamp: options.timestamp ? options.timestamp : Date.now()
-    };
-    if (options.eid) {
-        score.eid = options.eid;
-    }
-    if (options.bid !== undefined) {
-        score.bid = options.bid;
-    }
-    this.scores.push(score);
-    // Badge for 50 points
-    if (this.getScore() >= 50) {
-        setTimeout(this.giveBadge(22), 500);
-    } else {
-        this.takeBadge(22)
-    }
-    // Badge for 100 points
-    if (this.getScore() >= 100) {
-        setTimeout(this.giveBadge(29), 1000);
-    } else {
-        this.takeBadge(29);
-    }
-    return true;
+    // Delay to stop scores from hhaving identical timestamps
+    setTimeout(function() {
+        var score = {
+            type: options.type.toString().trim(),
+            value: isNaN(Number(options.value)) ? 0 : parseInt(options.value),
+            timestamp: options.timestamp ? options.timestamp : Date.now()
+        };
+        if (options.eid) {
+            score.eid = options.eid;
+        }
+        if (options.bid !== undefined) {
+            score.bid = options.bid;
+        }
+        this.scores.push(score);
+        // Badge for 50 points
+        if (this.getScore() >= 50) {
+            this.giveBadge(22);
+        } else {
+            this.takeBadge(22);
+        }
+        // Badge for 100 points
+        if (this.getScore() >= 100) {
+            this.giveBadge(29);
+        } else {
+            this.takeBadge(29);
+        }
+        return true;
+    }, Math.round(Math.rand() * 10));
 };
 UserSchema.methods.removeScore = function(t) {
-	console.log("REMOVE SCORE");
+    console.log("REMOVE SCORE");
     var self = this,
-		r = false;
+        r = false;
     this.scores.forEach(function(score, i) {
-		console.log("SCORE["+i+"] = "+ score.timestamp, score.timestamp == t);
+        console.log("SCORE[" + i + "] = " + score.timestamp, (score.timestamp === t));
+        console.log('typeof t = ' + typeof t, 'typeof score.timestamp = ' + typeof score.timestamp);
         if (score.timestamp == t) {
-			console.log("EQUALS");
+            console.log("EQUALS");
             self.scores.splice(i, 1);
 
             if (self.getScore() <= 50) {

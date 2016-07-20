@@ -74,30 +74,30 @@ router.put('/:subid/score', require('permission')(["developer", "admin"]), funct
     }
 });
 router.delete('/:subid/score', require('permission')(["developer", "admin"]), function(req, res) {
-	// TODO: FIXME
-	console.log("1");
+    // TODO: FIXME
+    console.log("1");
     if (req.verified) {
-		console.log("2");
+        console.log("2");
         if (req.verifiedUser.removeScore(req.body.timestamp ? req.body.timestamp : Date.now())) {
-			console.log("3");
-			req.verifiedUser.save(function(err, dbUser) {
+            console.log("3");
+            req.verifiedUser.save(function(err, dbUser) {
                 if (err) {
-					console.log("4");
+                    console.log("4");
                     res.statusCode = 500;
                     return res.json(Utils.getErrorObject(err));
                 } else {
-					console.log("5");
+                    console.log("5");
                     return res.send(req.verifiedUser.getScore().toString());
                 }
             });
         } else {
-			console.log("6");
-			var err = new Error("Failed to Edit User");
+            console.log("6");
+            var err = new Error("Failed to Edit User");
             res.statusCode = 400;
             return res.json(Utils.getErrorObject(err));
         }
     } else {
-		console.log("7");
+        console.log("7");
         return res.json(Utils.getErrorObject(new Error("User Not Found")));
     }
 });

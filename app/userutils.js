@@ -45,6 +45,7 @@ var userUtils = module.exports = {
                     } else if (err.message.startsWith("jwt signature is required")) {
                         err = new Error("Google Certificates Retrieval Error");
                     } else {
+						log.error(err);
                         err = new Error("Google Token Validation Failed");
                     }
                     return callback(err);
@@ -54,8 +55,8 @@ var userUtils = module.exports = {
                         log.verbose("Verify Token took\t" + ((time[0] / 1000) + (time[1] / Math.pow(1 * 10, 6))) + "ms.");
                         return callback(undefined, decodedToken);
                     } else {
-						// TODO: Temporarily disabled for testing
-						return callback(undefined, decodedToken);
+                        // TODO: Temporarily disabled for testing
+                        return callback(undefined, decodedToken);
                         // return callback(new Error("Invalid Email Domain"));
                     }
                 }
@@ -91,16 +92,16 @@ var userUtils = module.exports = {
             return callback(null, googleCertificates);
         }
     },
-	saveUser: function (user, success, res) {
-		user.save(function (err, dbUser) {
-			if (err) {
-				res.statusCode = 500;
-				return res.json(Utils.getErrorObject(err));
-			} else {
-				return success(dbUser);
-			}
-		})
-	},
+    saveUser: function(user, success, res) {
+        user.save(function(err, dbUser) {
+            if (err) {
+                res.statusCode = 500;
+                return res.json(Utils.getErrorObject(err));
+            } else {
+                return success(dbUser);
+            }
+        })
+    },
     getGoogleUser: function(subid, callback) {
         log.verbose("getGoogleUser(" + subid + ", " + typeof callback + ")");
         var baseUrl = "https://www.googleapis.com/plus/v1/people/" + subid + "?key=" + global.API_KEY;

@@ -29,7 +29,7 @@ github.authenticate({
 });
 
 router.get('/', function(req, res) {
-	console.log(req.isAuthenticated());
+    console.log(req.isAuthenticated());
     fs.readFile(global.DIR + '/../res/views/index.html', 'utf-8', function(err, body) {
         if (err) {
             res.statusCode = 500;

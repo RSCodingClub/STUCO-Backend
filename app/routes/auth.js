@@ -25,9 +25,9 @@ router.use(function(req, res, next) {
                     if (err) {
                         return res.json(Utils.getErrorObject(new Error("User Not Found")));
                     } else {
-                        if (user === undefined || user == null) {
+                        if (user === undefined || user === null) {
                             User.createUser(guser, function(err, dbuser) {
-                                if (err == undefined) {
+                                if (err === undefined) {
                                     req.user = dbUser;
                                     req.authenticated = true;
                                     res.set("Authenticated", true);
