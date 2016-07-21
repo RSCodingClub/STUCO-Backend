@@ -23,7 +23,7 @@ module.exports = function(app) {
         log.info("Storing Data for " + (err ? 0 : users.length) + " users");
     });
 
-    app.use('/api', routes.auth);
+    app.use('/', routes.auth);
     app.use('/', routes.index);
 
     app.use('/api/user/v1/', routes.apis.user.v1);

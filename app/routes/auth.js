@@ -35,7 +35,6 @@ router.use(function(req, res, next) {
                                 return next();
                             });
                         } else {
-							console.log("Authenticated as " + user.name);
                             req.user = user;
                             req.authenticated = true;
                             res.set("Authenticated", true);
@@ -49,7 +48,7 @@ router.use(function(req, res, next) {
         // Used for testing purposes
         res.set("Authenticated", false);
         req.authenticated = false;
-        // NOTE: Temporary code to allow for testing authoirzed requests
+        // NOTE: Temporary code to allow for testing authorized requests
         if (req.query.key === "MTAzNjg4NTM4Nzg0NDkzNTY0NDY4") {
             User.getUser("103688538784493564468", function(err, user) {
                 if (err) {

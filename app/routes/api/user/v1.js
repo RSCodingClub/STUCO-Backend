@@ -62,49 +62,42 @@ router.put('/:subid/score', require('permission')(["developer", "admin"]), funct
             value: req.body.value ? req.body.value : 0,
             type: "admin"
         });
-        userUtils.saveUser(req.verifiedUser, function(err, dbUser) {
+		req.verifiedUser.save(function (err, dbUser) {
             if (err) {
+				log.error(err);
                 return res.json(Utils.getErrorObject(new Error("Unexpected Error")));
             } else {
-                return res.send(req.verifiedUser.getScore().toString());
+                return res.send(dbUser.getScore().toString());
             }
-        });
+		});
     } else {
         return res.json(Utils.getErrorObject(new Error("User Not Found")));
     }
 });
 router.delete('/:subid/score', require('permission')(["developer", "admin"]), function(req, res) {
-    // TODO: FIXME
-    console.log("1");
     if (req.verified) {
-        console.log("2");
         if (req.verifiedUser.removeScore(req.body.timestamp ? req.body.timestamp : Date.now())) {
-            console.log("3");
             req.verifiedUser.save(function(err, dbUser) {
                 if (err) {
-                    console.log("4");
                     res.statusCode = 500;
                     return res.json(Utils.getErrorObject(err));
                 } else {
-                    console.log("5");
                     return res.send(req.verifiedUser.getScore().toString());
                 }
             });
         } else {
-            console.log("6");
             var err = new Error("Failed to Edit User");
             res.statusCode = 400;
             return res.json(Utils.getErrorObject(err));
         }
     } else {
-        console.log("7");
         return res.json(Utils.getErrorObject(new Error("User Not Found")));
     }
 });
 
 router.get('/:subid/badges', require('permission')(["student", "tester", "teacher", "stuco", "developer", "admin"]), function(req, res) {
     if (req.verified) {
-        return res.json(user.badges);
+        return res.json(req.verifiedUser.badges);
     } else {
         return res.json(Utils.getErrorObject(new Error("User Not Found")));
     }

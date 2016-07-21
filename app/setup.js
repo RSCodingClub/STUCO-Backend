@@ -106,22 +106,17 @@ app.use('/res', function(req, res, next) {
 });
 app.set('permission', {
     after: function(req, res, next, authStatus) {
-        console.log("AFTER");
         if (authStatus === permission.AUTHORIZED || authStatus === permission.NOT_AUTHORIZED) {
-            console.log("Authenticated");
             if (req.verified) {
                 req.isSelf = (req.user.subid === req.verifiedUser.subid);
             }
             if (authStatus === permission.AUTHORIZED) {
-                console.log("Authoirzed");
                 return next();
             } else {
-                console.log("Unauthorized");
                 res.statusCode = 400;
                 return res.json(Utils.getErrorObject(new Error("Permission Requirements Not Met")));
             }
         } else if (authStatus === permission.NOT_AUTHENTICATED) {
-            console.log("Unauthenticated");
             res.statusCode = 400;
             return res.json(Utils.getErrorObject(new Error("Missing or Invalid Authentication Header")));
         }

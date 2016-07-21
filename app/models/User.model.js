@@ -81,45 +81,49 @@ UserSchema.methods.exportAll = function() {
 
 
 // Scores
+UserSchema.methods.hasScore = function(t) {
+    var r = false;
+    this.scores.forEach(function(score, i) {
+        if (score.timestamp.toString() === t.toString()) {
+            r = true;
+        }
+    });
+    return r;
+};
 UserSchema.methods.giveScore = function(options) {
-    // Delay to stop scores from hhaving identical timestamps
-    setTimeout(function() {
-        var score = {
-            type: options.type.toString().trim(),
-            value: isNaN(Number(options.value)) ? 0 : parseInt(options.value),
-            timestamp: options.timestamp ? options.timestamp : Date.now()
-        };
-        if (options.eid) {
-            score.eid = options.eid;
-        }
-        if (options.bid !== undefined) {
-            score.bid = options.bid;
-        }
-        this.scores.push(score);
-        // Badge for 50 points
-        if (this.getScore() >= 50) {
-            this.giveBadge(22);
-        } else {
-            this.takeBadge(22);
-        }
+    var self = this,
+		timestamp = ((options.timestamp ? options.timestamp : Date.now()).toString()),
+    	score = {
+        	type: options.type.toString().trim(),
+        	value: isNaN(Number(options.value)) ? 0 : parseInt(options.value),
+        	timestamp: self.hasScore(timestamp) ? timestamp + 1 : timestamp
+    	};
+    if (options.eid) {
+        score.eid = options.eid;
+    }
+    if (options.bid !== undefined) {
+        score.bid = options.bid;
+    }
+    self.scores.push(score);
+    // Badge for 50 points
+    if (self.getScore() >= 50) {
+        self.giveBadge(22);
         // Badge for 100 points
-        if (this.getScore() >= 100) {
-            this.giveBadge(29);
+        if (self.getScore() >= 100) {
+            self.giveBadge(29);
         } else {
-            this.takeBadge(29);
+            self.takeBadge(29);
         }
-        return true;
-    }, Math.round(Math.rand() * 10));
+    } else {
+        self.takeBadge(22);
+    }
+    return true;
 };
 UserSchema.methods.removeScore = function(t) {
-    console.log("REMOVE SCORE");
     var self = this,
         r = false;
     this.scores.forEach(function(score, i) {
-        console.log("SCORE[" + i + "] = " + score.timestamp, (score.timestamp === t));
-        console.log('typeof t = ' + typeof t, 'typeof score.timestamp = ' + typeof score.timestamp);
-        if (score.timestamp == t) {
-            console.log("EQUALS");
+        if (score.timestamp.toString() === t.toString()) {
             self.scores.splice(i, 1);
 
             if (self.getScore() <= 50) {
@@ -153,13 +157,14 @@ UserSchema.methods.hasBadge = function(b) {
     return r;
 };
 UserSchema.methods.giveBadge = function(b) {
+    var self = this;
     if (typeof b === "number") {
-        if (this.hasBadge(b)) {
+        if (self.hasBadge(b)) {
             return false;
         } else {
-            this.badges.push(parseInt(b));
+            self.badges.push(parseInt(b));
             var badge = Badge.getBadge(b);
-            this.giveScore({
+            self.giveScore({
                 type: "badge",
                 value: badge.getReward(),
                 bid: b
@@ -171,11 +176,15 @@ UserSchema.methods.giveBadge = function(b) {
     }
 };
 UserSchema.methods.takeBadge = function(b) {
-    // TODO: Remove scores that badges grant
     var self = this;
     this.badges.forEach(function(o, i) {
         if (o === b) {
             self.badges.splice(i, 1);
+            self.scores.forEach(function(s, q) {
+                if (s.bid === b) {
+                    self.removeScore(s.timestamp);
+                }
+            });
             return true;
         }
     });

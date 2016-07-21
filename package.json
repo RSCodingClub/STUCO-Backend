@@ -10,7 +10,6 @@
   "license": "MIT",
   "dependencies": {
     "body-parser": "^1.15.0",
-    "chai": "^3.5.0",
     "dateformat": "^1.0.12",
     "express": "^4.13.4",
     "github": "^2.1.0",
@@ -19,11 +18,14 @@
     "jsonwebtoken": "^7.0.1",
     "log-util": "~1.1.1",
     "method-override": "^2.3.5",
-    "mocha": "^2.5.3",
     "mongoose": "^4.5.2",
     "morgan": "^1.7.0",
     "permission": "^1.0.4",
     "request": "^2.72.0",
     "validator": "^5.4.0"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^2.5.3"
   }
 }
