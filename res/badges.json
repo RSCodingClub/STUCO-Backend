@@ -18,13 +18,13 @@
     "id": 2
 }, {
     "name": "Following the Leader",
-    "desc": "Movin’ up",
+    "desc": "Movin' up",
     "earn": "Check the leaderboard for the first time",
     "reward": 5,
     "id": 3
 }, {
     "name": "McFly",
-    "desc": "Go home Marty.”",
+    "desc": "Go home Marty.",
     "earn": "Sign up for two events scheduled at the same time.",
     "reward": 0,
     "id": 4

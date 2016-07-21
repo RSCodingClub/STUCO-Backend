@@ -92,16 +92,6 @@ var userUtils = module.exports = {
             return callback(null, googleCertificates);
         }
     },
-    saveUser: function(user, success, res) {
-        user.save(function(err, dbUser) {
-            if (err) {
-                res.statusCode = 500;
-                return res.json(Utils.getErrorObject(err));
-            } else {
-                return success(dbUser);
-            }
-        })
-    },
     getGoogleUser: function(subid, callback) {
         log.verbose("getGoogleUser(" + subid + ", " + typeof callback + ")");
         var baseUrl = "https://www.googleapis.com/plus/v1/people/" + subid + "?key=" + global.API_KEY;
