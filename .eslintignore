@@ -1,2 +1,7 @@
 **/*{.,-}min.js
-/classes/*
+
+private
+private/*
+
+node_modules
+node_modules/*

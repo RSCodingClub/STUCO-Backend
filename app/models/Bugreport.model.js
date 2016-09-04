@@ -1,8 +1,5 @@
-var validator = require('validator');
-var Badge = require(global.DIR + '/classes/badge');
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
-var User = require(global.DIR + '/models/user.model');
 
 var BugreportSchema = new Schema({
     submitter: {
@@ -17,20 +14,20 @@ var BugreportSchema = new Schema({
     bugtype: {
         type: String,
         enum: {
-            values: "crash,ui,event,other".split(","),
-            message: "Invalid Bug Type"
+            values: 'crash,ui,event,other'.split(','),
+            message: 'Invalid Bug Type'
         },
         required: true
     },
     summary: {
         type: String,
-        maxlength: [512, "Summary is too long"],
+        maxlength: [512, 'Summary is too long'],
         required: true
     },
     description: {
         type: String,
-        minlength: [16, "Description is too short"],
-        maxlength: [4096, "Description is too long"],
+        minlength: [16, 'Description is too short'],
+        maxlength: [4096, 'Description is too long'],
         required: true
     },
     syslogs: {
@@ -60,13 +57,14 @@ BugreportSchema.methods.pretty = function() {
         closed: this.closed,
         bugtype: this.bugtype,
         description: this.description
-    }
+    };
 };
 
-module.exports = Bugreport = mongoose.model("Bugreport", BugreportSchema);
+let Bugreport = mongoose.model('Bugreport', BugreportSchema);
+module.exports = Bugreport;
 
 module.exports.getBugreportsByUser = function(subid, callback) {
-    Bugreport.find({}).where("submitter.subid").equals(subid).execute(callback);
+    Bugreport.find({}).where('submitter.subid').equals(subid).execute(callback);
 };
 
 module.exports.getBugreports = function(callback) {

@@ -1,10 +1,8 @@
-var validator = require('validator');
-var Badge = require(global.DIR + '/classes/badge');
 var Utils = require(global.DIR + '/utils');
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-var calendarTZ = "America/Chicago";
+var calendarTZ = 'America/Chicago';
 
 var EventSchema = new Schema({
     eid: {
@@ -20,17 +18,17 @@ var EventSchema = new Schema({
     },
     description: {
         type: String,
-        default: "",
+        default: '',
         maxlength: 1024
     },
     eventtype: {
         type: String,
-        enum: ["football", "homecominggame", "homecomingdance", "baseball", "basketball", "softball", "tennis", "lacrosse", "artshow", "theater", "choir", "band", "orchestra", "fieldhokey", "hockey", "waterpolo", "swimming", "club", "peprally", "dollardance", "winterdance", "orientation", "icecreamsocial", "trunkortreat", "cocoandcramming", "other"]
+        enum: ['football', 'homecominggame', 'homecomingdance', 'baseball', 'basketball', 'softball', 'tennis', 'lacrosse', 'artshow', 'theater', 'choir', 'band', 'orchestra', 'fieldhokey', 'hockey', 'waterpolo', 'swimming', 'club', 'peprally', 'dollardance', 'winterdance', 'orientation', 'icecreamsocial', 'trunkortreat', 'cocoandcramming', 'other']
     },
     location: {
         address: {
             type: String,
-            default: "1780 Hawkins Rd, Fenton, MO 63026"
+            default: '1780 Hawkins Rd, Fenton, MO 63026'
         },
         latitude: {
             type: Number,
@@ -85,7 +83,7 @@ EventSchema.methods.exportEvent = function() {
 
 EventSchema.methods.userAttending = function(subid) {
     var r = false;
-    this.attendees.forEach(function(attendee, i) {
+    this.attendees.forEach(function(attendee) {
         if (attendee.id === subid) {
             r = true;
         }
@@ -93,12 +91,13 @@ EventSchema.methods.userAttending = function(subid) {
     return r;
 };
 
-module.exports = Evnt = mongoose.model("Event", EventSchema);
+let Evnt = mongoose.model('Event', EventSchema);
+module.exports = Evnt;
 
 module.exports.createEvent = function(a, callback) {
     Evnt.getEvent(a.eid, function(err, evnt) {
         if (err) {
-			callback(err);
+			return callback(err);
         } else {
             if (evnt === undefined || evnt === null || evnt.length === 0) {
                 // Create Event
@@ -116,15 +115,15 @@ module.exports.createEvent = function(a, callback) {
                                 latitude: location.lat,
                                 longitude: location.lng
                             },
-                            start: (new Date(_['start'].dateTime ? _['start'].dateTime : (_['start'].date + "T00:00:00" + Utils.getUTCOffsetString(_['start'].timeZone ? _['start'].timeZone : calendarTZ)))),
-                            end: (new Date(_['end'].dateTime ? _['end'].dateTime : (_['end'].date + "T00:00:00" + Utils.getUTCOffsetString(_['end'].timeZone ? _['end'].timeZone : calendarTZ))))
+                            start: (new Date(this['start'].dateTime ? this['start'].dateTime : (this['start'].date + 'T00:00:00' + Utils.getUTCOffsetString(this['start'].timeZone ? this['start'].timeZone : calendarTZ)))),
+                            end: (new Date(this['end'].dateTime ? this['end'].dateTime : (this['end'].date + 'T00:00:00' + Utils.getUTCOffsetString(this['end'].timeZone ? this['end'].timeZone : calendarTZ))))
                         };
                         var e = new Evnt(r);
                         return e.save(callback);
                     }
                 });
             } else {
-                return callback(new Error("Event Already Exists"));
+                return callback(new Error('Event Already Exists'));
             }
         }
     });

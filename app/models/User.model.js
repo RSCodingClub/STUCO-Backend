@@ -12,12 +12,12 @@ var UserSchema = new Schema({
     name: {
         type: String,
         maxlength: 48,
-        default: ""
+        default: ''
     },
     nickname: {
         type: String,
         maxlength: 36,
-        default: ""
+        default: ''
     },
     email: {
         type: String,
@@ -37,8 +37,8 @@ var UserSchema = new Schema({
     },
     role: {
         type: String,
-        enum: ["student", "tester", "teacher", "stuco", "developer", "admin"],
-        default: ["student"]
+        enum: ['student', 'tester', 'teacher', 'stuco', 'developer', 'admin'],
+        default: ['student']
     }
 });
 
@@ -62,8 +62,8 @@ UserSchema.methods.getPublicUser = function() {
         nickname: this.nickname,
         score: this.getScore(),
         badges: this.badges
-    }
-}
+    };
+};
 UserSchema.methods.exportUser = function() {
     return {
         subid: this.subid,
@@ -83,7 +83,7 @@ UserSchema.methods.exportAll = function() {
 // Scores
 UserSchema.methods.hasScore = function(t) {
     var r = false;
-    this.scores.forEach(function(score, i) {
+    this.scores.forEach(function(score) {
         if (score.timestamp.toString() === t.toString()) {
             r = true;
         }
@@ -92,12 +92,12 @@ UserSchema.methods.hasScore = function(t) {
 };
 UserSchema.methods.giveScore = function(options) {
     var self = this,
-		timestamp = ((options.timestamp ? options.timestamp : Date.now()).toString()),
-    	score = {
-        	type: options.type.toString().trim(),
-        	value: isNaN(Number(options.value)) ? 0 : parseInt(options.value),
-        	timestamp: self.hasScore(timestamp) ? timestamp + 1 : timestamp
-    	};
+        timestamp = ((options.timestamp ? options.timestamp : Date.now()).toString()),
+        score = {
+            type: options.type.toString().trim(),
+            value: isNaN(Number(options.value)) ? 0 : parseInt(options.value),
+            timestamp: self.hasScore(timestamp) ? timestamp + 1 : timestamp
+        };
     if (options.eid) {
         score.eid = options.eid;
     }
@@ -127,7 +127,7 @@ UserSchema.methods.removeScore = function(t) {
             self.scores.splice(i, 1);
 
             if (self.getScore() <= 50) {
-                self.takeBadge(22)
+                self.takeBadge(22);
             }
             if (self.getScore() <= 100) {
                 self.takeBadge(29);
@@ -140,7 +140,7 @@ UserSchema.methods.removeScore = function(t) {
 };
 UserSchema.methods.getScore = function() {
     var total = 0;
-    this.scores.forEach(function(score, i) {
+    this.scores.forEach(function(score) {
         total += parseInt(score.value);
     });
     return total;
@@ -149,7 +149,7 @@ UserSchema.methods.getScore = function() {
 // Badges
 UserSchema.methods.hasBadge = function(b) {
     var r = false;
-    this.badges.forEach(function(o, i) {
+    this.badges.forEach(function(o) {
         if (o.toString() === b.toString().trim()) {
             r = true;
         }
@@ -158,14 +158,14 @@ UserSchema.methods.hasBadge = function(b) {
 };
 UserSchema.methods.giveBadge = function(b) {
     var self = this;
-    if (typeof b === "number") {
+    if (typeof b === 'number') {
         if (self.hasBadge(b)) {
             return false;
         } else {
             self.badges.push(parseInt(b));
             var badge = Badge.getBadge(b);
             self.giveScore({
-                type: "badge",
+                type: 'badge',
                 value: badge.getReward(),
                 bid: b
             });
@@ -180,7 +180,7 @@ UserSchema.methods.takeBadge = function(b) {
     this.badges.forEach(function(o, i) {
         if (o === b) {
             self.badges.splice(i, 1);
-            self.scores.forEach(function(s, q) {
+            self.scores.forEach(function(s) {
                 if (s.bid === b) {
                     self.removeScore(s.timestamp);
                 }
@@ -191,58 +191,51 @@ UserSchema.methods.takeBadge = function(b) {
     return false;
 };
 
-module.exports = User = mongoose.model("User", UserSchema);
+let User = mongoose.model('User', UserSchema);
+module.exports = User;
+
 module.exports.schema = UserSchema;
 
-module.exports.userExists = function(subid, callback) {
-    this.getUser(subid, function(err, user) {
-        if (err) {
-            return callback(false);
-        } else {
-            return callback(user !== null);
-        }
+module.exports.userExists = function(subid) {
+    return new Promise(function(done) {
+        this.getUser(subid, function(err, user) {
+            if (err) {
+                done(false);
+            } else {
+                done(user !== null);
+            }
+        });
     });
 };
 
-module.exports.getUser = function(subid, callback) {
+module.exports.getUser = function(subid) {
     return User.findOne({
         subid: subid
-    }, callback);
+    });
 };
 
-module.exports.getUsers = function(callback) {
-    return User.find({}, callback);
+module.exports.getUsers = function() {
+    return User.find({});
 };
 
-module.exports.createUser = function(guser, callback) {
+module.exports.createUser = function(guser) {
     var user = new User({
         subid: guser.sub.toString().trim(),
         name: guser.name,
         nickname: guser.given_name,
         email: guser.email,
-        role: "student"
+        role: 'student'
     });
     user.giveBadge(0);
-    user.save(function(err, dbUser) {
-        if (err) {
-            res.statusCode = 500;
-            var e = new Error("Failed to Create User");
-            return callback(e);
-        } else {
-            log.info("Welcome " + dbUser.nickname);
-            return callback(undefined, dbUser);
-        }
-    });
+    return user.save();
 };
 
-module.exports.getLeaderboard = function(callback) {
+module.exports.getLeaderboard = function() {
     var scores = [];
-    this.getUsers(function(err, users) {
-        if (err) {
-            return callback(err);
-        } else {
+    return new Promise((done, reject) => {
+        this.getUsers().then((users) => {
             if (users.length > 0) {
-                users.forEach(function(u, i) {
+                users.forEach(function(u) {
                     scores.push(u.getPublicUser());
                 });
                 scores.sort(function(a, b) {
@@ -255,7 +248,7 @@ module.exports.getLeaderboard = function(callback) {
                     return 0;
                 });
             }
-            return callback(undefined, scores);
-        }
+            done(scores);
+        }).catch(reject);
     });
 };

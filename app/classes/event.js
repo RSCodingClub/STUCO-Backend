@@ -1,4 +1,3 @@
-var request = require('request');
 var googleUtils = require(global.DIR + '/googleutils');
 var log = require('log-util');
 var Utils = require(global.DIR + '/utils');
@@ -6,68 +5,68 @@ var User = require(global.DIR + '/models/user.model');
 
 var events = [];
 var eventMap = {};
-var calendarTZ = "America/Chicago";
+var calendarTZ = 'America/Chicago';
 
 var Event = module.exports = function(evnt) {
-    this.eid = "";
+    this.eid = '';
     var _ = {
         googleevent: {},
-        eventtype: "",
-        eventreward: "",
-        kind: "calendar#event",
-        etag: "",
-        status: "",
-        htmllink: "",
-        created: "",
-        updated: "",
-        summary: "",
-        description: "",
-        location: "",
-        colorid: "",
+        eventtype: '',
+        eventreward: '',
+        kind: 'calendar#event',
+        etag: '',
+        status: '',
+        htmllink: '',
+        created: '',
+        updated: '',
+        summary: '',
+        description: '',
+        location: '',
+        colorid: '',
         creator: {
-            id: "",
-            email: "",
-            displayName: "",
+            id: '',
+            email: '',
+            displayName: '',
             self: false
         },
         organizer: {
-            id: "",
-            email: "",
-            displayName: "",
+            id: '',
+            email: '',
+            displayName: '',
             self: false
         },
         start: {
-            date: "",
-            dateTime: "",
-            timeZone: ""
+            date: '',
+            dateTime: '',
+            timeZone: ''
         },
         end: {
-            date: "",
-            dateTime: "",
-            timeZone: ""
+            date: '',
+            dateTime: '',
+            timeZone: ''
         },
         endtimeunspecified: false,
-        recurrence: [""],
-        recurringeventid: "",
+        recurrence: [''],
+        recurringeventid: '',
         originalstarttime: {
-            date: "",
-            dateTime: "",
-            timeZone: ""
+            date: '',
+            dateTime: '',
+            timeZone: ''
         },
-        transparency: "",
-        visibility: "",
-        icaluid: "",
+        transparency: '',
+        visibility: '',
+        icaluid: '',
         sequence: 0,
         attendees: [],
         attendeesomitted: false
-    }
+    };
 
     // Constructor
     if (evnt) {
         // console.log(evnt.start.dateTime, " - ", evnt.end.dateTime);
         this.eid = evnt.id;
         _['googleevent'] = evnt;
-        _['eventtype'] = "";
+        _['eventtype'] = '';
         _['eventreward'] = 0;
         _['kind'] = evnt.kind;
         _['etag'] = evnt.etag;
@@ -149,17 +148,17 @@ var Event = module.exports = function(evnt) {
     // - Add attendee
     // - Give user badge and reward
     this.checkin = function(subid, lat, lng, callback) {
-        log.verbose("User().checkin(" + subid + ", " + lat + ", " + lng + ", " + typeof callback + ")")
+        log.verbose('User().checkin(' + subid + ', ' + lat + ', ' + lng + ', ' + typeof callback + ')');
         if (User.userExists(subid)) {
             var user = User.getUser(subid);
 
             // Within Timeframe including timezones
-            var withinStart = new Date(_['start'].dateTime ? _['start'].dateTime : (_['start'].date + "T00:00:00" + Utils.getUTCOffsetString(_['start'].timeZone ? _['start'].timeZone : calendarTZ))).getTime() < Date.now();
-            var withinEnd = new Date(_['end'].dateTime ? _['end'].dateTime : (_['end'].date + "T00:00:00" + Utils.getUTCOffsetString(_['end'].timeZone ? _['end'].timeZone : calendarTZ))).getTime() > Date.now();
+            var withinStart = new Date(_['start'].dateTime ? _['start'].dateTime : (_['start'].date + 'T00:00:00' + Utils.getUTCOffsetString(_['start'].timeZone ? _['start'].timeZone : calendarTZ))).getTime() < Date.now();
+            var withinEnd = new Date(_['end'].dateTime ? _['end'].dateTime : (_['end'].date + 'T00:00:00' + Utils.getUTCOffsetString(_['end'].timeZone ? _['end'].timeZone : calendarTZ))).getTime() > Date.now();
             if (withinStart && withinEnd) {
                 var attendees = _['attendees'] ? _['attendees'] : [];
                 var checkedin = false;
-                attendees.forEach(function(u, i) {
+                attendees.forEach(function(u) {
                     if (u.id == subid) {
                         checkedin = true;
                     }
@@ -174,26 +173,26 @@ var Event = module.exports = function(evnt) {
                                     id: subid,
                                     email: user.getEmail(),
                                     displayName: user.getNickname(),
-                                    responseStatus: "accepted"
+                                    responseStatus: 'accepted'
                                 };
 								_['attendees'].push(attendee);
                                 googleUtils.updateEvent(_['googleevent'].id, {
                                     start: _['start'],
                                     end: _['end'],
                                     attendees: _['attendees']
-                                }, function(err, resp) {
+                                }, function(err) {
 									if (err) {
-										console.log("splicing attendee");
+										console.log('splicing attendee');
 										_['attendees'].splice(_['attendees'].length - 1, 1);
 										return callback(err);
 									} else {
-										log.log(user.toString() + " checked into " + _['summary']);
+										log.log(user.toString() + ' checked into ' + _['summary']);
 										// TODO GIVE BADGE AND POINTS TO USER
 										return callback(undefined, true);
 									}
                                 });
                             } else {
-                                return callback(new Error("Not At Event Location"));
+                                return callback(new Error('Not At Event Location'));
                             }
                         }
                     });
@@ -201,23 +200,23 @@ var Event = module.exports = function(evnt) {
                     return callback(new Error('Already Checked Into Event'));
                 }
             } else {
-                return callback(new Error("Not During Event Time"));
+                return callback(new Error('Not During Event Time'));
             }
         } else {
-            return callback(new Error("User Not Found"));
+            return callback(new Error('User Not Found'));
         }
     };
 };
 
 var updateEvents = function(callback) {
-    log.verbose("updateEvents(" + typeof callback + ")");
+    log.verbose('updateEvents(' + typeof callback + ')');
     googleUtils.getEvents({}, function(err, events) {
         if (err) {
 			log.error(err.stack);
         } else {
             if (events.length > 0) {
-                events.forEach(function(e, i) {
-                    var evnt = new Event(e);
+                events.forEach(function(e) {
+                    new Event(e);
                     return callback();
                 });
             }
@@ -241,7 +240,7 @@ if (global.ENV == 'developement') {
     }, 5 * 60 * 1000);
 } else if (global.ENV == 'production') {
     setInterval(function() {
-        var time = new Date().getHours(d.getHours() + (d.getMinutes() / 60));
+        var time = new Date().getHours(new Date().getHours() + (new Date().getMinutes() / 60));
         if (time === 14.5 || time === 0) {
             updateEvents(function(err) {
                 if (err) {
@@ -258,7 +257,7 @@ if (global.ENV == 'developement') {
     });
 }
 
-module.exports.getEvents = function(eid) {
+module.exports.getEvents = function() {
     return events;
 };
 module.exports.getEvent = function(eid) {

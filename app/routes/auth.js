@@ -1,72 +1,31 @@
-var express = require('express');
-var router = express.Router({
+const express = require('express');
+const router = express.Router({
     mergeParams: true
 });
-var fs = require('fs');
-var log = require('log-util');
-var Utils = require(global.DIR + '/utils');
-var userUtils = require(global.DIR + '/userutils');
-var User = require(global.DIR + '/models/user.model');
+const passport = require('passport');
+const Utils = require(global.DIR + '/utils');
 
-router.use(function(req, res, next) {
-    req.authenticated = false
-    res.set("Authenticated", false);
-    req.isAuthenticated = function() {
-        return req.authenticated;
-    }
-    if ((req.headers.authentication && req.headers.authentication.startsWith("Token ")) || (req.query.auth && req.query.auth.startsWith("Token "))) {
-        var token = req.headers.authentication ? req.headers.authentication : req.query.authentication;
-        userUtils.verifyToken(token.substring("Token ".length), function(err, guser) {
-            if (err) {
-                res.statusCode = 400;
-                return res.json(Utils.getErrorObject(err));
-            } else {
-                User.getUser(guser.payload.sub.toString().trim(), function(err, user) {
-                    if (err) {
-                        return res.json(Utils.getErrorObject(new Error("User Not Found")));
-                    } else {
-                        if (user === undefined || user === null) {
-                            User.createUser(guser, function(err, dbuser) {
-                                if (err === undefined) {
-                                    req.user = dbUser;
-                                    req.authenticated = true;
-                                    res.set("Authenticated", true);
-                                }
-                                return next();
-                            });
-                        } else {
-                            req.user = user;
-                            req.authenticated = true;
-                            res.set("Authenticated", true);
-                            return next();
-                        }
-                    }
-                });
-            }
-        });
-    } else if (req.query.key) {
-        // Used for testing purposes
-        res.set("Authenticated", false);
-        req.authenticated = false;
-        // NOTE: Temporary code to allow for testing authorized requests
-        if (req.query.key === "MTAzNjg4NTM4Nzg0NDkzNTY0NDY4") {
-            User.getUser("103688538784493564468", function(err, user) {
-                if (err) {
-                    return res.json(Utils.getErrorObject(new Error("Unexpected Error")));
-                } else {
-                    req.user = user;
-                    req.authenticated = true;
-                    res.set("Authenticated", true);
-                    return next();
-                }
-            });
-        } else {
-            res.statusCode = 400;
-            return res.json(Utils.getErrorObject(new Error("Invalid API Key")));
-        }
-    } else {
-        return next();
-    }
+router.use(function (req, res, next) {
+	if (req.headers.authentication !== undefined) req.body.id_token = req.headers.authentication.substring(req.headers.authentication.indexOf('Token ') + 'Token '.length);
+	if (req.headers.id_token !== undefined) req.body.id_token = req.headers.id_token;
+	if (req.query.auth !== undefined) req.body.id_token = req.query.auth;
+
+	passport.authenticate('google-id-token', function (err, user, info) {
+		console.log('err', err);
+		console.log('user', typeof user);
+		console.log('info', info);
+		if (err) {
+			res.json(Utils.getErrorObject(new Error('Google Token Validation Failed')));
+		}
+		if (info) {
+			if (info.message.startsWith('jwt audience invalid.')) return next(Utils.getErrorObject(new Error('Invalid Audience')));
+			if (info.message.startsWith('jwt expired')) return next(Utils.getErrorObject(new Error('UserToken Has Expired')));
+			if (info.message.startsWith('jwt issuer invalid.')) return next(Utils.getErrorObject(new Error('TokenIssuer is Invalid')));
+			if (info.message.startsWith('jwt malformed')) return next(Utils.getErrorObject(new Error('Invalid TokenCertificate')));
+			if (info.message.startsWith('jwt signature is required')) return next(Utils.getErrorObject(new Error('Google Certificates Retrieval Error')));
+		}
+		return next();
+	})(req, res, next);
 });
 
 module.exports = router;

@@ -13,8 +13,8 @@ var authClient = new google.auth.JWT(
 );
 
 module.exports.getEvents = function(options, callback) {
-    log.verbose("getEvents(" + typeof callback + ")");
-    authClient.authorize(function(err, tokens) {
+    log.verbose('getEvents(' + typeof callback + ')');
+    authClient.authorize(function(err) {
         if (err) {
             return callback(err);
         } else {
@@ -31,7 +31,7 @@ module.exports.getEvents = function(options, callback) {
                 if (err) {
                     return callback(err);
                 } else {
-                    log.info("Loaded " + resp.items.length + " events.");
+                    log.info('Loaded ' + resp.items.length + ' events.');
                     return callback(undefined, resp.items ? resp.items : []);
                 }
             });
@@ -52,16 +52,16 @@ module.exports.updateEvent = function(eid, eventDetails, callback) {
     		responseStatus: ""
     	}]
     } */
-    log.verbose("updateEvent(" + eid + ", " + JSON.stringify(eventDetails).substring(0, 10) + "... , " + typeof callback + ")");
+    log.verbose('updateEvent(' + eid + ', ' + JSON.stringify(eventDetails).substring(0, 10) + '... , ' + typeof callback + ')');
     authClient.authorize(function(err, tokens) {
         if (err) {
             return callback(err);
         } else {
-            var url = "https://www.googleapis.com/calendar/v3/calendars/" + global.CALENDAR_ID + "/events/" + eid + "?key=" + global.API_KEY
+            var url = 'https://www.googleapis.com/calendar/v3/calendars/' + global.CALENDAR_ID + '/events/' + eid + '?key=' + global.API_KEY;
             var params = {
                 uri: url,
                 headers: {
-                    "Authorization": "Bearer " + tokens.access_token
+                    'Authorization': 'Bearer ' + tokens.access_token
                 },
                 body: eventDetails,
                 json: true
