@@ -1,9 +1,8 @@
-var Badge = require(global.DIR + '/classes/badge');
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-var BadgeSchema = new Schema({
-    bid: {
+let BadgeSchema = new Schema({
+    id: {
         type: Number
     },
     name: {
@@ -28,28 +27,44 @@ BadgeSchema.pre('save', function(next) {
     if (!this.created_at) {
         this.created_at = new Date();
     }
-    next();
+    return next();
 });
 
 // Formatting
+BadgeSchema.methods.object = () => {
+	let self = this;
+    return {
+        id: self.id,
+        name: self.name,
+        desc: self.desc,
+        earn: self.earn,
+        reward: self.reward
+    };
+};
 BadgeSchema.methods.toString = function() {
     return this.name.toString().trim();
 };
 
 
-module.exports = Badge = mongoose.model('Badge', BadgeSchema);
+let Badge = module.exports = mongoose.model('Badge', BadgeSchema);
 module.exports.schema = BadgeSchema;
 
-module.exports.getBadges = function(callback) {
-    Badge.find({}, function(err, badges) {
-        return callback(err, badges);
+module.exports.getBadges = () => {
+    return Badge.find({});
+};
+
+module.exports.getBadge = (id) => {
+    return Badge.findOne({
+        id: id
     });
 };
 
-module.exports.getBadge = function(bid, callback) {
-    Badge.findOne({
-        bid: bid
-    }, function(err, badge) {
-        return callback(err, badge);
+module.exports.badgeExists = (id) => {
+    return new Promise(function(done) {
+        Badge.getBadge(id).then((badge) => {
+            return done(badge !== undefined);
+        }).catch(() => {
+            return done(false);
+        });
     });
 };

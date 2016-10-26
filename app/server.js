@@ -1,5 +1,5 @@
 var log = require('log-util');
-var User = require(global.DIR + '/models/user.model');
+var User = require(global.DIR + '/models/User.model');
 
 var routes = {
     apis: {

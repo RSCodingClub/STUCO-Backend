@@ -1,9 +1,9 @@
-var validator = require('validator');
-var Badge = require(global.DIR + '/classes/badge');
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
+const validator = require('validator');
+const Badge = require(global.DIR + '/models/Badge.model');
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-var UserSchema = new Schema({
+let UserSchema = new Schema({
     subid: {
         type: String,
         required: true,
@@ -38,7 +38,13 @@ var UserSchema = new Schema({
     role: {
         type: String,
         enum: ['student', 'tester', 'teacher', 'stuco', 'developer', 'admin'],
-        default: ['student']
+        default: 'student'
+    },
+    apikey: {
+        type: String,
+        default: function() {
+            return require('crypto').randomBytes(24).toString('base64');
+        }
     }
 });
 
@@ -72,7 +78,8 @@ UserSchema.methods.exportUser = function() {
         email: this.email,
         scores: this.scores,
         badges: this.badges,
-        role: this.role
+        role: this.role,
+		apikey: this.apikey
     };
 };
 UserSchema.methods.exportAll = function() {
@@ -82,7 +89,7 @@ UserSchema.methods.exportAll = function() {
 
 // Scores
 UserSchema.methods.hasScore = function(t) {
-    var r = false;
+    let r = false;
     this.scores.forEach(function(score) {
         if (score.timestamp.toString() === t.toString()) {
             r = true;
@@ -91,7 +98,7 @@ UserSchema.methods.hasScore = function(t) {
     return r;
 };
 UserSchema.methods.giveScore = function(options) {
-    var self = this,
+    let self = this,
         timestamp = ((options.timestamp ? options.timestamp : Date.now()).toString()),
         score = {
             type: options.type.toString().trim(),
@@ -105,22 +112,27 @@ UserSchema.methods.giveScore = function(options) {
         score.bid = options.bid;
     }
     self.scores.push(score);
-    // Badge for 50 points
-    if (self.getScore() >= 50) {
-        self.giveBadge(22);
-        // Badge for 100 points
-        if (self.getScore() >= 100) {
-            self.giveBadge(29);
+    // XXX: Fix this so it works
+    return new Promise((done) => {
+        // Badge for 50 points
+        if (self.getScore() >= 50) {
+            self.giveBadge(22).then(() => {
+                // Badge for 100 points
+                if (self.getScore() >= 100) {
+                    self.giveBadge(29).then(() => {
+                        return done();
+                    });
+                } else {
+                    self.takeBadge(29);
+                }
+            });
         } else {
-            self.takeBadge(29);
+            self.takeBadge(22);
         }
-    } else {
-        self.takeBadge(22);
-    }
-    return true;
+    });
 };
 UserSchema.methods.removeScore = function(t) {
-    var self = this,
+    let self = this,
         r = false;
     this.scores.forEach(function(score, i) {
         if (score.timestamp.toString() === t.toString()) {
@@ -139,7 +151,7 @@ UserSchema.methods.removeScore = function(t) {
     return r;
 };
 UserSchema.methods.getScore = function() {
-    var total = 0;
+    let total = 0;
     this.scores.forEach(function(score) {
         total += parseInt(score.value);
     });
@@ -148,7 +160,7 @@ UserSchema.methods.getScore = function() {
 
 // Badges
 UserSchema.methods.hasBadge = function(b) {
-    var r = false;
+    let r = false;
     this.badges.forEach(function(o) {
         if (o.toString() === b.toString().trim()) {
             r = true;
@@ -157,26 +169,34 @@ UserSchema.methods.hasBadge = function(b) {
     return r;
 };
 UserSchema.methods.giveBadge = function(b) {
-    var self = this;
-    if (typeof b === 'number') {
+    let self = this;
+    return new Promise((done, reject) => {
         if (self.hasBadge(b)) {
-            return false;
+            return reject(new Error('Failed to Give User Badge'));
         } else {
-            self.badges.push(parseInt(b));
-            var badge = Badge.getBadge(b);
-            self.giveScore({
-                type: 'badge',
-                value: badge.getReward(),
-                bid: b
+            Badge.badgeExists(b).then((exists) => {
+                if (exists) {
+                    self.badges.push(parseInt(b));
+                    Badge.getBadge(b).then((badge) => {
+                        self.giveScore({
+                            type: 'badge',
+                            value: badge.reward,
+                            bid: b
+                        }).then(() => {
+                            return done();
+                        });
+                    }).catch((err) => {
+                        return reject(err);
+                    });
+                } else {
+                    reject(new Error('Badge Not Found'));
+                }
             });
-            return true;
         }
-    } else {
-        return false;
-    }
+    });
 };
 UserSchema.methods.takeBadge = function(b) {
-    var self = this;
+    let self = this;
     this.badges.forEach(function(o, i) {
         if (o === b) {
             self.badges.splice(i, 1);
@@ -191,26 +211,23 @@ UserSchema.methods.takeBadge = function(b) {
     return false;
 };
 
-let User = mongoose.model('User', UserSchema);
-module.exports = User;
+let User = module.exports = mongoose.model('User', UserSchema);
 
 module.exports.schema = UserSchema;
-
-module.exports.userExists = function(subid) {
-    return new Promise(function(done) {
-        this.getUser(subid, function(err, user) {
-            if (err) {
-                done(false);
-            } else {
-                done(user !== null);
-            }
-        });
-    });
-};
 
 module.exports.getUser = function(subid) {
     return User.findOne({
         subid: subid
+    });
+};
+
+module.exports.userExists = (subid) => {
+    return new Promise(function(done) {
+        User.getUser(subid).then((user) => {
+            return done(user !== undefined);
+        }).catch(() => {
+            return done(false);
+        });
     });
 };
 
@@ -219,19 +236,28 @@ module.exports.getUsers = function() {
 };
 
 module.exports.createUser = function(guser) {
-    var user = new User({
+    let user = new User({
         subid: guser.sub.toString().trim(),
         name: guser.name,
         nickname: guser.given_name,
         email: guser.email,
         role: 'student'
     });
-    user.giveBadge(0);
-    return user.save();
+    return new Promise((done, reject) => {
+        user.giveBadge(0).then(() => {
+            user.save().then((user) => {
+                return done(user);
+            }).catch((err) => {
+                return reject(err);
+            });
+        }).catch((err) => {
+            return reject(err);
+        });
+    });
 };
 
 module.exports.getLeaderboard = function() {
-    var scores = [];
+    let scores = [];
     return new Promise((done, reject) => {
         this.getUsers().then((users) => {
             if (users.length > 0) {

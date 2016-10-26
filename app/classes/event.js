@@ -1,7 +1,7 @@
-var googleUtils = require(global.DIR + '/googleutils');
-var log = require('log-util');
-var Utils = require(global.DIR + '/utils');
-var User = require(global.DIR + '/models/user.model');
+const googleUtils = require(global.DIR + '/googleutils');
+const log = require('log-util');
+const Utils = require(global.DIR + '/utils');
+const moment = require('moment-timezone');
 
 var events = [];
 var eventMap = {};
@@ -122,138 +122,136 @@ var Event = module.exports = function(evnt) {
         _[item.toString().toLowerCase().trim()] = value;
         return this;
     };
-    this.onLocation = function(lat, lng, acc, callback) {
-        return callback(undefined, true);
-		// Utils.getLocationFromAddress(_['location'], function(err, location) {
-        //     if (err) {
-        //         return callback(err);
-        //     } else {
-        //         var dist = Utils.getDistance(location.lat, location.lng, lat, lng);
-        //         if (dist + acc < global.ACCEPTABLE_RADIUS) {
-        //             return callback(undefined, true);
-        //         } else if (dist - acc < global.ACCEPTABLE_RADIUS) {
-        //             return callback(undefined, true);
-        //         } else {
-        //             return callback(undefined, false);
-        //         }
-        //     }
-        // });
+    this.isAttending = (user) => {
+        var checkedin = false;
+        var attendees = _['attendees'] ? _['attendees'] : [];
+        attendees.forEach(function(u) {
+            if (u.id == user.subid) {
+                checkedin = true;
+            }
+        });
+        return checkedin;
+    };
+    this.onLocation = function(lat, lng, acc) {
+        // NOTE: The following line temporarily disables location testing
+        // return new Promise((done) => {return done();});
+        return new Promise((done, reject) => {
+            Utils.getLocationFromAddress(_['location']).then((location) => {
+                var dist = Utils.getDistance(location.lat, location.lng, lat, lng);
+                if (dist + acc < global.ACCEPTABLE_RADIUS) {
+                    return done(true);
+                } else if (dist - acc < global.ACCEPTABLE_RADIUS) {
+                    return done(true);
+                } else {
+                    return done(false);
+                }
+            }).catch((err) => {
+                return reject(err);
+            });
+        });
     };
 
     // General checkin method
-    // - Authenticate user token
     // - Valid Time
     // - Check for id in attendee list
     // - Valid location
     // - Add attendee
     // - Give user badge and reward
-    this.checkin = function(subid, lat, lng, callback) {
-        log.verbose('User().checkin(' + subid + ', ' + lat + ', ' + lng + ', ' + typeof callback + ')');
-        if (User.userExists(subid)) {
-            var user = User.getUser(subid);
-
+    this.checkin = function(user, lat, lng) {
+        log.verbose('User().checkin(' + user.subid + ', ' + lat + ', ' + lng + ', ' + typeof callback + ')');
+        return new Promise((done, reject) => {
             // Within Timeframe including timezones
-            var withinStart = new Date(_['start'].dateTime ? _['start'].dateTime : (_['start'].date + 'T00:00:00' + Utils.getUTCOffsetString(_['start'].timeZone ? _['start'].timeZone : calendarTZ))).getTime() < Date.now();
-            var withinEnd = new Date(_['end'].dateTime ? _['end'].dateTime : (_['end'].date + 'T00:00:00' + Utils.getUTCOffsetString(_['end'].timeZone ? _['end'].timeZone : calendarTZ))).getTime() > Date.now();
-            if (withinStart && withinEnd) {
-                var attendees = _['attendees'] ? _['attendees'] : [];
-                var checkedin = false;
-                attendees.forEach(function(u) {
-                    if (u.id == subid) {
-                        checkedin = true;
-                    }
-                });
-                if (!checkedin) {
-                    this.onLocation(lat, lng, 50, function(err, onlocation) {
-                        if (err) {
-                            return callback(err);
-                        } else {
-                            if (onlocation) {
-                                var attendee = {
-                                    id: subid,
-                                    email: user.getEmail(),
-                                    displayName: user.getNickname(),
-                                    responseStatus: 'accepted'
-                                };
-								_['attendees'].push(attendee);
-                                googleUtils.updateEvent(_['googleevent'].id, {
-                                    start: _['start'],
-                                    end: _['end'],
-                                    attendees: _['attendees']
-                                }, function(err) {
-									if (err) {
-										console.log('splicing attendee');
-										_['attendees'].splice(_['attendees'].length - 1, 1);
-										return callback(err);
-									} else {
-										log.log(user.toString() + ' checked into ' + _['summary']);
-										// TODO GIVE BADGE AND POINTS TO USER
-										return callback(undefined, true);
-									}
-                                });
-                            } else {
-                                return callback(new Error('Not At Event Location'));
-                            }
-                        }
-                    });
-                } else {
-                    return callback(new Error('Already Checked Into Event'));
+            console.log('test', _['start'].timeZone || calendarTZ);
+
+            let startTime = new Date(moment(_['start'].dateTime || _['start'].date).tz(_['start'].timeZone || calendarTZ).format()); // new Date(moment.tz(new Date(_['start'].dateTime || _['start'].date), _['start'].timeZone || calendarTZ).format());
+            let endTime = new Date(moment(_['end'].dateTime || _['end'].date).tz(_['end'].timeZone || calendarTZ).format());
+            console.log('startTime', startTime, startTime.getTime() < Date.now());
+            console.log('endTime', endTime, endTime.getTime() > Date.now());
+            console.log('Date.str()', startTime);
+            console.log('Date.now()', new Date(moment().format()));
+            console.log('Date.end()', endTime);
+            console.log('Range', endTime.getTime() - startTime.getTime());
+            if (startTime.getTime() < Date.now() && endTime.getTime() > Date.now()) {
+                if (this.isAttending(user)) {
+                    return reject(new Error('Already Checked Into Event'));
                 }
+                console.log(lat, lng);
+                this.onLocation(lat, lng, 50).then((onlocation) => {
+                    if (!onlocation) return reject(new Error('Not At Event Location'));
+                    // _['attendees'].push({
+                    //     id: user.subid,
+                    //     email: user.email,
+                    //     displayName: user.nickname,
+                    //     responseStatus: 'accepted'
+                    // });
+                    googleUtils.addAttendee(_['googleevent'].id, user).then((data) => {
+                        console.log('data', data);
+                        return done();
+                    }).catch(() => {
+                        return reject(new Error('Failed to Update Event'));
+                    });
+                    // googleUtils.updateEvent(_['googleevent'].id, {
+                    //     start: _['start'],
+                    //     end: _['end'],
+                    //     attendees: _['attendees']
+                    // }, function(err) {
+                    //     if (err) {
+                    //         _['attendees'].splice(_['attendees'].length - 1, 1);
+                    //         return reject(err);
+                    //     }
+                    //     log.log(user.toString() + ' checked into ' + _['summary']);
+                    //     // TODO GIVE BADGE AND POINTS TO USER
+                    //     return done(true);
+                    // });
+                }).catch((err) => {
+                    return reject(err);
+                });
+
+
             } else {
-                return callback(new Error('Not During Event Time'));
+                return reject(new Error('Not During Event Time'));
             }
-        } else {
-            return callback(new Error('User Not Found'));
-        }
+        });
     };
 };
 
-var updateEvents = function(callback) {
-    log.verbose('updateEvents(' + typeof callback + ')');
-    googleUtils.getEvents({}, function(err, events) {
-        if (err) {
-			log.error(err.stack);
-        } else {
-            if (events.length > 0) {
-                events.forEach(function(e) {
-                    new Event(e);
-                    return callback();
-                });
-            }
-        }
+var updateEvents = function() {
+    log.verbose('updateEvents()');
+    return new Promise((done, reject) => {
+        googleUtils.getEvents({}).then((newEvents) => {
+            events = [];
+            eventMap = {};
+            newEvents.forEach(function(e) {
+                new Event(e);
+            });
+            log.info('Loaded ' + events.length + ' events.');
+            return done();
+        }).catch((err) => {
+            console.log('errr', err);
+            return reject(err);
+        });
     });
 };
 
-updateEvents(function(err) {
-    if (err) {
-        log.error(err);
-    }
+updateEvents().catch((err) => {
+    log.error(err);
 });
 
 if (global.ENV == 'developement') {
     setInterval(function() {
-        updateEvents(function(err) {
-            if (err) {
-                log.error(err);
-            }
+        updateEvents().catch((err) => {
+            log.error(err);
         });
     }, 5 * 60 * 1000);
 } else if (global.ENV == 'production') {
     setInterval(function() {
-        var time = new Date().getHours(new Date().getHours() + (new Date().getMinutes() / 60));
-        if (time === 14.5 || time === 0) {
-            updateEvents(function(err) {
-                if (err) {
-                    log.error(err);
-                }
-            });
-        }
-    }, 30 * 1000);
-} else {
-    updateEvents(function(err) {
-        if (err) {
+        updateEvents().catch((err) => {
             log.error(err);
-        }
+        });
+    }, 30 * 60 * 1000);
+} else {
+    updateEvents().catch((err) => {
+        log.error(err);
     });
 }
 

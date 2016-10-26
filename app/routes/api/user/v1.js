@@ -8,21 +8,19 @@ const User = require(global.DIR + '/models/user.model');
 
 router.param('subid', function(req, res, next, subid) {
     req.verified = false;
-    User.userExists(subid.toString().trim(), function(exists) {
+    User.userExists(subid.toString().trim()).then((exists) => {
         if (exists) {
-            User.getUser(subid.toString().trim(), function(err, user) {
-                if (err) {
-                    res.statusCode = 500;
-                    return res.json(Utils.getErrorObject(err));
-                } else {
-                    req.verified = true;
-                    req.verifiedUser = user;
-                    return next();
-                }
+            User.getUser(subid.toString().trim()).then((user) => {
+                req.verified = true;
+                req.verifiedUser = user;
+                return next();
+            }).catch(() => {
+                res.statusCode = 404;
+                return res.json(Utils.getErrorObject(new Error('User Not Found')));
             });
         } else {
-            res.statusCode = 404;
-            return res.json(Utils.getErrorObject(new Error('User Not Found')));
+			res.statusCode = 404;
+			return res.json(Utils.getErrorObject(new Error('User Not Found')));
         }
     });
 });
@@ -59,12 +57,12 @@ router.put('/:subid/score', require('permission')(['developer', 'admin']), funct
             value: req.body.value ? req.body.value : 0,
             type: 'admin'
         });
-		req.verifiedUser.save().then((dbUser) => {
-			return res.send(dbUser.getScore().toString());
-		}).catch((err) => {
-			log.error(err);
-			return res.json(Utils.getErrorObject(new Error('Unexpected Error')));
-		});
+        req.verifiedUser.save().then((dbUser) => {
+            return res.send(dbUser.getScore().toString());
+        }).catch((err) => {
+            log.error(err);
+            return res.json(Utils.getErrorObject(new Error('Unexpected Error')));
+        });
     } else {
         return res.json(Utils.getErrorObject(new Error('User Not Found')));
     }
@@ -73,11 +71,11 @@ router.delete('/:subid/score', require('permission')(['developer', 'admin']), fu
     if (req.verified) {
         if (req.verifiedUser.removeScore(req.body.timestamp ? req.body.timestamp : Date.now())) {
             req.verifiedUser.save().then(() => {
-				return res.send(req.verifiedUser.getScore().toString());
-			}).catch((err) => {
-				res.statusCode = 500;
-				return res.json(Utils.getErrorObject(err));
-			});
+                return res.send(req.verifiedUser.getScore().toString());
+            }).catch((err) => {
+                res.statusCode = 500;
+                return res.json(Utils.getErrorObject(err));
+            });
         } else {
             res.statusCode = 400;
             return res.json(Utils.getErrorObject(new Error('Failed to Edit User')));
@@ -172,10 +170,10 @@ router.put('/:subid/name', require('permission')(['developer', 'admin']), functi
         if (req.body.name) {
             req.verifiedUser.name = req.body.name.toString().trim();
             req.verifiedUser.save().then((dbUser) => {
-				return res.send(dbUser.name);
-			}).catch((err) => {
-				return res.json(Utils.getErrorObject(err));
-			});
+                return res.send(dbUser.name);
+            }).catch((err) => {
+                return res.json(Utils.getErrorObject(err));
+            });
         } else {
             return res.json(Utils.getErrorObject(new Error('Invalid Request Parameters')));
         }
@@ -213,10 +211,10 @@ router.put('/:subid/nickname', require('permission')(['developer', 'admin']), fu
 
 router.get('/leaderboard', require('permission')(), function(req, res) {
     User.getLeaderboard().then((scores) => {
-		return res.json(scores);
-	}).catch(() => {
-		return res.json([]);
-	});
+        return res.json(scores);
+    }).catch(() => {
+        return res.json([]);
+    });
 });
 
 module.exports = router;

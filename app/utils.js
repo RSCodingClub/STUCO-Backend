@@ -16,6 +16,7 @@ module.exports = {
         return dist;
     },
     getLocationFromAddress: function(address) {
+		log.verbose('getLocationFromAddress(' + address + ')');
         return new Promise((done, reject) => {
             request({
                 method: 'get',

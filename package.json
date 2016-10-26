@@ -6,7 +6,7 @@
   "scripts": {
     "test": "npm run eslint && npm run nsp && npm run mocha",
     "eslint": "./node_modules/.bin/eslint .",
-    "nsp": "./node_modules/.bin/nsp check",
+    "nsp": "./node_modules/.bin/nsp check --warn-only",
     "mocha": "./node_modules/.bin/mocha --recursive"
   },
   "author": "Jeffrey Meyer",
@@ -19,18 +19,21 @@
   "dependencies": {
     "body-parser": "^1.15.0",
     "dateformat": "^1.0.12",
-    "express": "^4.13.4",
+    "express": "https://registry.npmjs.org/express/-/express-4.14.0.tgz",
     "github": "^2.1.0",
     "googleapis": "^12.4.0",
     "helmet": "^2.1.1",
     "jsonwebtoken": "^7.0.1",
     "log-util": "~1.1.1",
     "method-override": "^2.3.5",
+    "moment-timezone": "^0.5.5",
     "mongoose": "^4.5.2",
     "morgan": "^1.7.0",
     "passport": "^0.3.2",
     "passport-google-id-token": "^0.4.0",
+    "passport-localapikey": "0.0.3",
     "permission": "^1.0.4",
+    "request": "https://registry.npmjs.org/request/-/request-2.72.0.tgz",
     "request-promise-native": "^1.0.3",
     "validator": "^5.4.0"
   },

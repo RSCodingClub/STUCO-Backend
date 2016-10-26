@@ -1,5 +1,5 @@
 const {expect} = require('chai');
-const Badge = require(global.DIR + '/models/Badge.models');
+const Badge = require(__dirname.replace('test', 'app') + '/Badge.model');
 
 describe('Badge Model', function () {
 	describe('Schema', function () {

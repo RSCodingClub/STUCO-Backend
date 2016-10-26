@@ -1,40 +1,39 @@
 'use strict';
 
-const format = require('dateformat');
 const fs = require('fs');
-const path = require('path');
-const morgan = require('morgan');
-const bodyParser = require('body-parser');
-const methodOverride = require('method-override');
 const log = require('log-util');
+const path = require('path');
 const http = require('http');
+const format = require('dateformat');
+const morgan = require('morgan');
+const helmet = require('helmet');
 const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
-const helmet = require('helmet');
 const passport = require('passport');
-const GoogleTokenStrategy = require('passport-google-id-token');
 const permission = require('permission');
+const bodyParser = require('body-parser');
+const methodOverride = require('method-override');
+const LocalAPIKeyStrategy = require('passport-localapikey');
+const GoogleTokenStrategy = require('passport-google-id-token');
 
-log.setDateFormat('HH:MM:ss');
+global.CONFIG = require('./app/config.json');
 
-// StartCom privat key password 9OwkuwSf7SjM7ITFwh9zYyFx5A7yEcFz
-
-// APP private key password DLwOzvvqK9UhT2nW7C4AzwXJiubXBGw9
-// CA private key password 5yqj1ssdO1fPA6wDf3PmbvmPNxhPE5um
+log.setDateFormat(global.CONFIG['date-format']);
 
 global.PORT = process.env.PORT ? process.env.PORT : 443;
 global.DIR = __dirname;
 global.ENV = process.env.ENV ? process.env.ENV : 'developement';
 
-global.API_KEY = 'AIzaSyDQhrNxeNTp-uONV9fUuElCylSQF2MHMtI';
-global.CLIENT_IDS = [
-    '407408718192.apps.googleusercontent.com', // Oauth2 Playground
-    '967723309632-am5oak97qk8n6fsu1kageopv4be9tj5u.apps.googleusercontent.com' // Mobile Application
-];
-global.CALENDAR_ID = 'bcervcjfb5q5niuunqbcjk9iig@group.calendar.google.com'; //"rsdmo.org_u4953i62qnu54ue96198b5eoas@group.calendar.google.com"; //"d7qc2o4as3tspi1k9617pdjvho@group.calendar.google.com"; //"rsdmo.org_39313733373631393232@resource.calendar.google.com";
-global.ACCEPTABLE_RADIUS = 400;
-global.MAX_ACC = 40;
+global.API_KEY = global.CONFIG['api-key'];
+global.CLIENT_IDS = global.CONFIG['client-ids'];
+global.CALENDAR_ID = global.CONFIG['calendar-id'];
+//'d7qc2o4as3tspi1k9617pdjvho@group.calendar.google.com'; // Stuco App Test (Donny's)
+//'bcervcjfb5q5niuunqbcjk9iig@group.calendar.google.com'; // Stuco Test Calendar (mine)
+//'rsdmo.org_u4953i62qnu54ue96198b5eoas@group.calendar.google.com'; // Student Council Test Event Calendar
+//'rsdmo.org_39313733373631393232@resource.calendar.google.com'; // Rockwood Summit-Public Calendar
+global.ACCEPTABLE_RADIUS = global.CONFIG['acceptable-radius'];
+global.MAX_ACC = global.CONFIG['max-accuracy'];
 
 global.ERR_CODES = JSON.parse(fs.readFileSync(path.join(global.DIR, '/../res/errorcodes.json')));
 global.TZ = JSON.parse(fs.readFileSync(path.join(global.DIR, '/../res/timezones.json')));
@@ -48,7 +47,7 @@ if (global.ENV === 'developement') {
 }
 let mongoLogin = {
     usr: 'mongoose',
-    pwd: '5fC7O9p5iNf4gSkNzW0KlqQm9pkJXYMTnA2Z',
+    pwd: fs.readFileSync(path.join(global.DIR, '/../private/mongodb.pwd')).toString().replace(/\r?\n|\r/g, ''),
     host: 'localhost',
     port: '27017',
     db: 'stucoapp'
@@ -104,6 +103,9 @@ app.use(bodyParser.json({
 }));
 app.use(methodOverride());
 
+// Allow Forwarding Through Proxy Server
+app.enable('trust proxy');
+
 // Setup static files
 app.use(express.static(global.DIR + '/../res'));
 app.use('/res', function(req, res, next) {
@@ -111,42 +113,61 @@ app.use('/res', function(req, res, next) {
     next();
 });
 // Passport
-app.use(passport.initialize());
 passport.serializeUser(function(user, done) {
     done(null, user);
 });
 passport.deserializeUser(function(user, done) {
     done(null, user);
 });
+passport.use(new LocalAPIKeyStrategy.Strategy({
+		passReqToCallback: true
+	},
+    function(req, apikey, done) {
+		console.log('API Login', apikey);
+        User.findOne({
+            apikey: apikey
+        }).then((user) => {
+			if (!user) {
+                return done(null, false);
+            }
+			req.user = user;
+            return done(null, user);
+		}).catch((err) => {
+			return done(err);
+		});
+    }
+));
 passport.use(new GoogleTokenStrategy({
         clientID: global.CLIENT_IDS,
-        getGoogleCerts: userUtils.getGoogleCertificates(),
+        getGoogleCerts: userUtils.getGoogleCertificates,
         passReqToCallback: true
     },
     function(req, parsedToken, subid, done) {
-        console.log('req.user', typeof req.user);
-        console.log('token', typeof parsedToken);
         User.getUser(subid).then((user) => {
             if (user == undefined) {
-                User.createUser(parsedToken).then((dbUser) => {
+                User.createUser(parsedToken.payload).then((dbUser) => {
+                    req.user = dbUser;
                     return done(undefined, dbUser);
                 }).catch((err) => {
                     return done(err);
                 });
+            } else {
+                req.user = user;
+                return done(undefined, user);
             }
-            done(undefined, user);
         }).catch((err) => {
-            done(err);
+            return done(err);
         });
     }
 ));
+app.use(passport.initialize());
 
 // Permission routing
 app.set('permission', {
     after: function(req, res, next, authStatus) {
-		console.log('authStatus', authStatus);
         if (authStatus === permission.AUTHORIZED || authStatus === permission.NOT_AUTHORIZED) {
             if (req.verified) {
+				if (req.user.subid == undefined) return next();
                 req.isSelf = (req.user.subid === req.verifiedUser.subid);
                 return next();
             }

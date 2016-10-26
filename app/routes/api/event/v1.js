@@ -7,6 +7,7 @@ var Event = require(global.DIR + '/classes/event');
 
 router.get(['/events/:limit/:index', '/events/:limit', '/events'], function(req, res) {
     var events = Event.getEvents();
+	console.log('events', events.length);
     var r = [];
     events.forEach(function(e) {
         if (req.query.data && req.query.data === 'all') {
@@ -66,31 +67,24 @@ router.post(['/onlocation/:eid'], function(req, res) {
 // @param {string} eid - Event ID
 // @param {string} usertoken - RSA256 Google User Access Token
 router.post('/checkin/:eid', function(req, res) {
-	res.send('Under Construction.');
+	console.log('Checking in to ', req.params.eid, 'as', req.user);
+	// res.send('Under Construction.');
     // TODO: Verify Parameters
     // FIXME: Deprecated
-    // userUtils.verifyToken(req.body.usertoken, function(err, guser) {
-    //     if (err) {
-    //         res.statusCode = 400;
-    // 		return res.json(Utils.getErrorObject(err));
-    //     } else {
-    // 		if (Event.eventExists(req.params.eid.toString().trim())) {
-    // 			var evnt = Event.getEvent(req.params.eid.toString().trim());
-    // 			evnt.checkin(guser.sub, parseFloat(req.body.latitude), parseFloat(req.body.longitude), function (err, resp) {
-    // 				if (err) {
-    // 					res.statusCode = 400;
-    // 					return res.json(Utils.getErrorObject(err));
-    // 				} else {
-    // 					return res.json(User.getUser(guser.sub).getPublicUser());
-    // 					//res.json(resp);
-    // 				}
-    // 			});
-    // 		} else {
-    // 			res.statusCode = 400;
-    // 			return res.json(Utils.getErrorObject(new Error("Event Not Found")));
-    // 		}
-    //     }
-    // });
+	if (req.isAuthenticated()) {
+		if (Event.eventExists(req.params.eid.toString().trim())) {
+            var evnt = Event.getEvent(req.params.eid.toString().trim());
+            evnt.checkin(req.user, parseFloat(req.body.latitude), parseFloat(req.body.longitude)).then(() => {
+				return res.json(req.user.getPublicUser());
+			}).catch((err) => {
+				res.statusCode = 400;
+				return res.json(Utils.getErrorObject(err));
+			});
+        } else {
+            res.statusCode = 400;
+            return res.json(Utils.getErrorObject(new Error('Event Not Found')));
+        }
+	}
 });
 
 module.exports = router;
