@@ -4,7 +4,7 @@ const router = express.Router({
 });
 const Utils = require(global.DIR + '/utils');
 const log = require('log-util');
-const User = require(global.DIR + '/models/user.model');
+const User = require(global.DIR + '/models/User.model');
 
 router.param('subid', function(req, res, next, subid) {
     req.verified = false;

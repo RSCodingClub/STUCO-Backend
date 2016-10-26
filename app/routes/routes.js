@@ -4,7 +4,7 @@ var router = express.Router({
 });
 var fs = require('fs');
 var Utils = require(global.DIR + '/utils');
-var Bugreport = require(global.DIR + '/models/bugreport.model');
+var Bugreport = require(global.DIR + '/models/Bugreport.model');
 var GitHubApi = require('github');
 var github = new GitHubApi({
     // optional
