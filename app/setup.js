@@ -17,7 +17,7 @@ const methodOverride = require('method-override');
 const LocalAPIKeyStrategy = require('passport-localapikey');
 const GoogleTokenStrategy = require('passport-google-id-token');
 
-global.CONFIG = require('./app/config.json');
+global.CONFIG = require(__dirname + '/config.json');
 
 log.setDateFormat(global.CONFIG['date-format']);
 
