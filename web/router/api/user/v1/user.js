@@ -18,7 +18,7 @@ router.get('/details', (req, res) => {
 
 router.get('/all', (req, res) => {
   // Return all info on the user including some private information
-  res.json(req.targetUser.exportAll())
+  res.json(req.targetUser)
 })
 
 module.exports = router

@@ -114,6 +114,7 @@ module.exports.addEvent = (googleEvent) => {
   const debug = require('debug')('stuco:model:event:addEvent')
   debug('add event', googleEvent.id)
   // Don't store cancelled events
+  // BUG: If event is cancelled delete it from the database, also potentially go through its attendees first and remove score with matching eid
   if (googleEvent.status === 'cancelled') return Promise.reject('Event is cancelled.')
   // Steps
   // Convert all non schema variables to schema variables (address to lat lon, dates to datetime)
