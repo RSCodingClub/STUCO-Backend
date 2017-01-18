@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Login Test</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-social/5.1.1/bootstrap-social.min.css" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/plugins/toolbar/prism-toolbar.min.css" />
+
+    <link href="https://fonts.googleapis.com/css?family=Ubuntu+Mono" rel="stylesheet">
+
+    <style media="screen">
+      span.token {
+        font-family: "Ubuntu Mono",Menlo,Monaco,Consolas,"Courier New",monospace;
+      }
+      span.token.property {
+        font-weight: 700;
+        color: #333;
+      }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <h1>Login Test</h1>
+        </div>
+        <div class="row" id="alerts">
+
+        </div>
+        <!-- <div class="form-group row">
+            <label for="id-token">Your ID Token</label>
+            <div class="input-group">
+                <textarea class="form-control custom-control" id="id-token" rows="3" style="resize:none; height: 215px;">Sign in below to see your id token.</textarea>
+                <span class="input-group-addon btn btn-default" type="button" id="copy-btn" data-clipboard-target="#id-token"><i class="fa fa-files-o" aria-hidden="true"></i> Copy</span>
+            </div>
+        </div> -->
+        <div class="row" id="login-row">
+            <button class="btn btn-lg btn-block btn-social btn-google" type="button" id="login"><span class="fa fa-google"></span> Sign in with Google</button>
+        </div>
+        <div class="row" id="json-viewer" style="display: none">
+          <pre>
+            <code class="language-json" id="json-code"></code>
+          </pre>
+        </div>
+        <div class="row">
+          <button class="btn btn-default btn-large btn-block" id="copy-btn" style="display: none" data-clipboard-text type="button">Copy ID Token</button>
+        </div>
+    </div>
+
+    <!-- Jquery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <!-- Google Login -->
+    <script src="https://apis.google.com/js/platform.js" asycn defer></script>
+    <!-- Clipboard -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.16/clipboard.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+    <!-- Prism -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/plugins/normalize-whitespace/prism-normalize-whitespace.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/plugins/highlight-keywords/prism-highlight-keywords.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/components/prism-json.min.js"></script>
+
+    <script>
+        let wait = setInterval(() => {
+            if (gapi == null) {
+                return
+            } else {
+                clearInterval(wait)
+                gapi.load('auth2', function() {
+                    gapi.auth2.init({
+                        client_id: '967723309632-am5oak97qk8n6fsu1kageopv4be9tj5u.apps.googleusercontent.com',
+                        cookiepolicy: 'single_host_origin'
+                    }).attachClickHandler($('#login')[0], {}, (googleUser) => {
+                        $('#login-row').hide()
+                        $('#copy-btn').attr('data-clipboard-text', googleUser.getAuthResponse().id_token.toString())
+                        if (googleUser.getHostedDomain() !== 'rsdmo.org') {
+                          $('#alerts').append(
+                          '<div class="alert alert-info" role="alert">' +
+                            '<strong>Heads up!</strong> This user will not be able to authenticate with the api because it\'s Google Apps domain doesn\'t meet the criteria' +
+                          '</div>')
+                        }
+
+                        window.googleUser = googleUser
+                        console.log('googleUser', googleUser)
+
+                        $('#json-code').text(JSON.stringify({
+                            payloadBody: JSON.parse(atob(googleUser.getAuthResponse().id_token.split('.')[1])),
+                            authResponse: googleUser.getAuthResponse()
+                        }, null, 2))
+                        $('#json-viewer').show()
+                        $('#copy-btn').show()
+                        Prism.highlightElement($('#json-code')[0])
+
+                        setTimeout(() => {
+                            // Reload page
+                            document.location.reload(true)
+                        }, googleUser.getAuthResponse().expires_in * 1000) // Google Token Expiration
+                    })
+                })
+            }
+        }, 200)
+        $(document).ready(() => {
+            let clipboard = new Clipboard('#copy-btn')
+            $('#json-viewer').hide()
+            $('#copy-btn').hide()
+        })
+    </script>
+</body>
+
+</html>

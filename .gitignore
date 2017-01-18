@@ -3,3 +3,4 @@ nodemon.json
 /private
 *.log
 .gitignore
+.bashrc
