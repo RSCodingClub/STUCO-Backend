@@ -19,29 +19,28 @@ let handler = (req, res) => {
       req.targetEvent.attendees.push(req.user)
       // Save event with new attendee
       req.targetEvent.save().then((dbEvent) => {
+        // TODO: Give badge based on category to user
         // Give score to user
-        let score = req.user.giveScore({
+        req.user.giveScore({
           value: dbEvent.reward,
           type: 'event',
           eid: dbEvent.eid
-        })
-        score.then((dbUser) => {
-          // Send user back to requester
-          res.json(dbUser.getPublicUser())
-        }).catch((giveScoreError) => {
+        }).save().then((dbUser) => {
+          return res.json(dbUser.getPublicUser())
+        }).catch((dbError) => {
           // Failed to give user new score
-          logger.error(giveScoreError, {'context': 'giveScoreError'})
-          res.error('Unexpected Error', 500)
+          logger.error(dbError, {'context': 'dbError'})
+          return res.error()
         })
       }).catch((dbSaveError) => {
-        logger.error(dbSaveError, {'context': 'dbSaveError'})
-        res.error('Unexpected Error', 500)
+        logger.error(dbSaveError, {'context': 'dbError'})
+        return res.error()
       })
     } catch (locationError) {
       return res.error('Invalid Location Data')
     }
   } else {
-    res.error('Not During Event Time')
+    return res.error('Not During Event Time')
   }
 }
 
