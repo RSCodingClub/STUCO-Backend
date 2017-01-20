@@ -35,6 +35,7 @@ let error = (req, res, next) => {
     if (error == null) {
       debug('assuming unxpected since error was null')
       error = 'Unexpected Error'
+      httpStatusCode = 500
     }
     if (!(error instanceof Error)) {
       // Log only 500 errors

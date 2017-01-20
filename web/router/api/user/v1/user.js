@@ -1,6 +1,7 @@
 'use strict'
 
 const express = require('express')
+const permission = require('permission')
 const Router = express.Router
 const router = new Router()
 
@@ -11,13 +12,16 @@ router.get(['/', '/public'], (req, res) => {
   res.json(req.targetUser.getPublicUser())
 })
 
-router.get('/details', (req, res) => {
+router.get('/details', permission(['teacher', 'stuco', 'developer', 'admin']), (req, res) => {
   // Return more info on the user
   res.json(req.targetUser.exportUser())
 })
 
-router.get('/all', (req, res) => {
+router.get('/all', permission(['developer', 'admin']), (req, res) => {
   // Return all info on the user including some private information
+  if (req.isSelf) {
+    return res.error('Permission Requirements Not Met')
+  }
   res.json(req.targetUser)
 })
 
