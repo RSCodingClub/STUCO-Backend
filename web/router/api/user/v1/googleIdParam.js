@@ -10,14 +10,14 @@ const googleIdParam = (req, res, next, googleid) => {
     uid: googleid
   }).then((dbUser) => {
     if (dbUser == null) {
-      debug('return user failed (not found) "%s"', googleid)
+      debug('return user failed (not found) "' + googleid + '"')
       return res.error('User Not Found', 404)
     }
-    debug('return user succeeded "%s"', googleid) // Possibly print out user object
+    debug('return user succeeded "' + googleid + '"')
     req.targetUser = dbUser
     return next()
   }).catch((dbError) => {
-    debug('return user failed', googleid, dbError)
+    debug('return user failed "' + googleid + '"', dbError)
     return res.error('User Not Found', 404)
   })
 }
