@@ -3,6 +3,7 @@ const express = require('express')
 const router = express.Router({
   mergeParams: true
 })
+const RateLimit = require('express-rate-limit')
 const github = new (require('github'))({
   debug: false,
   protocol: 'https',
@@ -69,3 +70,12 @@ router.post(['/submitbug', '/createbugreport', '/submitreport', '/bugreport', '/
     return res.json(Utils.getErrorObject(new Error('Missing or Invalid Authorization Header')))
   }
 })
+
+router.use(new RateLimit({
+  message: 'Too many bug reports submitted too fast.  Wait a few minutes before trying again.',
+  headers: true,
+  windowMs: 15 * 60 * 1000, // 15 minute window
+  max: 25,
+  delayAfter: 1,
+  delayMs: (15 * 60 * 1000) / (25 - 1) // Delay requests as to never reach the max
+}))
