@@ -26,6 +26,10 @@ let handler = () => {}
   * @apiDefine admin admin
   * Admin role with any permissions required for running the application
 */
+/**
+  * @apiDefine self self
+  * Assumed role if authenticated user and target user are the same, used for managing account
+*/
 let after = (req, res, next, authStatus) => {
   if (authStatus === permission.AUTHORIZED) {
     return next()

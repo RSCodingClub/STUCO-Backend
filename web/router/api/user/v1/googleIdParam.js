@@ -3,6 +3,13 @@
 const debug = require('debug')('stuco:web:middleware:googleIdParam')
 const User = require('../../../../../models/User')
 
+/**
+  * @apiDefine GoogleIdParam
+  * @apiParam {String} googleid A user's Google profile's unique identifier
+  * @apiParamExample {String} GoogleId-Example:
+  *     "108718953214804737014"
+  * @apiError UserNotFound The user <code>googleid</code> was not found
+*/
 debug('load parser')
 const googleIdParam = (req, res, next, googleid) => {
   debug('parse googleid parameter', googleid)
