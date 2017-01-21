@@ -19,7 +19,8 @@ const github = new Github({
   includePreview: true
 })
 
-github.authenticate({type: 'basic', username: config.github.username, password: config.github.access_token})
+// Works github.authenticate({type: 'basic', username: config.github.username, password: config.github.access_token})
+github.authenticate({type: 'token', token: config.github.access_token})
 
 // NOTE: We may need to add permissions to only allow certain users to submit BugreportSchema
 // NOTE: We also may want to add a quota for certain roles, (student is 5 reports per hour, tester is unlimmited, etc)
@@ -37,22 +38,21 @@ router.post('/', (req, res) => {
       syslogs: req.body.syslogs,
       applogs: req.body.applogs
     }).save().then((dbBug) => {
-      return res.json(dbBug.pretty())
+      // return res.json(dbBug.pretty())
       // TODO: Do checking for duplicate bugs then create issue
-      // BUG: Github won't create issue (Not Found)
-      // github.issues.create({
-      //   owner: 'RSCodingClub',
-      //   repo: 'STUCO-Backend',
-      //   title: dbBug.summary,
-      //   body: dbBug.description,
-      //   labels: ['bub', dbBug.bugtype]
-      // }).then((issue) => {
-      //   logger.info('Created Github bug report.')
-      //   return res.json(dbBug.pretty())
-      // }).catch((githubError) => {
-      //   logger.error(githubError, {context: 'githubError'})
-      //   return res.error()
-      // })
+      github.issues.create({
+        owner: 'RSCodingClub',
+        repo: 'STUCO-Backend',
+        title: dbBug.summary,
+        body: dbBug.description.toString().trim(),
+        labels: ['bug', dbBug.bugtype]
+      }).then((issue) => {
+        logger.info('Created Github bug report.')
+        return res.json(dbBug.pretty())
+      }).catch((githubError) => {
+        logger.error(githubError, {context: 'githubError'})
+        return res.error()
+      })
     }).catch((dbError) => {
       logger.error(dbError, {context: 'dbError'})
       return res.error()
