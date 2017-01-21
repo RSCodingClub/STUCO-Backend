@@ -19,13 +19,32 @@ const github = new Github({
   includePreview: true
 })
 
-// Works github.authenticate({type: 'basic', username: config.github.username, password: config.github.access_token})
 github.authenticate({type: 'token', token: config.github.access_token})
 
 // NOTE: We may need to add permissions to only allow certain users to submit BugreportSchema
 // NOTE: We also may want to add a quota for certain roles, (student is 5 reports per hour, tester is unlimmited, etc)
+/**
+  * @api {post} /api/v1/bugreport Submit a bug report
+  * @apiVersion 1.0.0
+  * @apiName Submit
+  * @apiGroup Bugreport
+  * @apiDescription Submit a bug report to bugreport database and github issues
+  *
+  * @apiUse AuthParam
+  *
+  * @apiParam {String="crash","ui","login","event","other"} bugtype The type or category of bug
+  * @apiParam {String{1..512}} summary Title for the bug occuring
+  * @apiParam {String{16..4096}} description Description of the bug
+  * @apiParam {String} [syslogs] System logs at the time of the bug
+  * @apiParam {String} [applogs] Application logs associated with the bug
+  *
+  * @apiSuccess {String} submitter User ID of the submitter
+  * @apiSuccess {Boolean} closed Whether or not the issue has been handled
+  * @apiSuccess {String} summary Submitted title of the bugreport
+  * @apiSuccess {String} description Submitted description of the bugreport
+  * @apiSuccess {String} bugtype Submitted type of the bugreport
+*/
 router.post('/', (req, res) => {
-  // {bugtype, summary, description, syslogs, applogs}
   if (req.body.bugtype == null || req.body.summary == null || req.body.summary.trim() === '' || req.body.description == null || req.body.description === '') {
     return res.error('Body Parameters Not Met')
   } else {
