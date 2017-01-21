@@ -1,4 +1,5 @@
 const express = require('express')
+<<<<<<< HEAD
 const logger = require('winston')
 const Github = require('github')
 const Router = express.Router
@@ -7,6 +8,13 @@ const config = require('../../../../../config')
 const Bugreport = require('../../../../../models/Bugreport')
 
 const github = new Github({
+=======
+const router = express.Router({
+  mergeParams: true
+})
+const RateLimit = require('express-rate-limit')
+const github = new (require('github'))({
+>>>>>>> 8443436522a7d831ab5a55f717a25926164685a8
   debug: false,
   protocol: 'https',
   host: 'api.github.com',
@@ -79,4 +87,15 @@ router.post('/', (req, res) => {
   }
 })
 
+<<<<<<< HEAD
 module.exports = router
+=======
+router.use(new RateLimit({
+  message: 'Too many bug reports submitted too fast.  Wait a few minutes before trying again.',
+  headers: true,
+  windowMs: 15 * 60 * 1000, // 15 minute window
+  max: 25,
+  delayAfter: 1,
+  delayMs: (15 * 60 * 1000) / (25 - 1) // Delay requests as to never reach the max
+}))
+>>>>>>> 8443436522a7d831ab5a55f717a25926164685a8
