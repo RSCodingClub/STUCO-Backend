@@ -17,7 +17,7 @@ var BugreportSchema = new Schema({
       values: ['crash', 'ui', 'login', 'event', 'other'],
       message: 'Invalid Bug Type'
     },
-    required: true
+    default: 'other'
   },
   summary: {
     type: String,
