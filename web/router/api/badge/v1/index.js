@@ -17,8 +17,9 @@ router.param('badgeid', badgeIdParam)
   * @apiVersion 1.0.0
   * @apiName GetBadges
   * @apiGroup Badges
-  *
   * @apiDescription Returns an array of all badges
+  *
+  * @apiUse AuthParam
   *
   * @apiSuccess {Object[]} badges List of badges
   * @apiSuccess {Number} badges.bid The badge's id
