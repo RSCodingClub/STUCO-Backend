@@ -48,8 +48,9 @@ router.get('/', (req, res) => {
   * @apiVersion 1.0.0
   * @apiName GetBadge
   * @apiGroup Badges
-  *
   * @apiDescription Returns the details on a single badge
+  *
+  * @apiUse AuthParam
   *
   * @apiSuccess {Object} badge List of badge
   * @apiSuccess {Number} badge.bid The badge's id
@@ -71,8 +72,9 @@ router.get('/:badgeid', (req, res) => {
   * @apiVersion 1.0.0
   * @apiName PutBadge
   * @apiGroup Badges
-  *
   * @apiDescription Create a new badge
+  *
+  * @apiUse AuthParam
   *
   * @apiParam {Number} badgeid The badges id
   * @apiParam {String} name The name of the badge
