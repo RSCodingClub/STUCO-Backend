@@ -35,6 +35,9 @@ app.use((error, req, res, next) => {
   res.error(error, 500)
 })
 
+// permissions
+app.set('permission', middleware.permissionHandler.settings)
+
 module.exports = new Promise((resolve, reject) => {
   // custom auth and listen for google event updates
   Promise.all([auth.googleCertificates(), middleware.eventListener.init()]).then((responses) => {

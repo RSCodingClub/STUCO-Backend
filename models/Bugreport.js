@@ -14,10 +14,10 @@ var BugreportSchema = new Schema({
   bugtype: {
     type: String,
     enum: {
-      values: 'crash,ui,event,other'.split(','),
+      values: ['crash', 'ui', 'login', 'event', 'other'],
       message: 'Invalid Bug Type'
     },
-    required: true
+    default: 'other'
   },
   summary: {
     type: String,
@@ -35,6 +35,13 @@ var BugreportSchema = new Schema({
   },
   applogs: {
     type: String
+  },
+  created_at: {
+    type: Date,
+    default: new Date()
+  },
+  updated_at: {
+    type: Date
   }
 })
 

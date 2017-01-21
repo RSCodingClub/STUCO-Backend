@@ -6,8 +6,12 @@ const Badge = require('../../../../../models/Badge')
 debug('load parser')
 const badgeParam = (req, res, next, badgeid) => {
   debug('parse badgeid parameter', badgeid)
+  if (isNaN(badgeid)) {
+    debug('badgeid is not a number')
+    return res.error('Badge Not Found', 404)
+  }
   Badge.findOne({
-    id: badgeid
+    bid: Math.trunc(badgeid)
   }).then((dbBadge) => {
     if (dbBadge == null) {
       debug('return badge failed (not found) "%s"', badgeid)

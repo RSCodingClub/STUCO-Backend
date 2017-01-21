@@ -6,6 +6,19 @@ const JWT = require('passport-jwt')
 const jwt = require('jsonwebtoken')
 const debug = require('debug')('stuco:web:auth:passporthandler')
 
+/**
+  * @apiDefine AuthParam
+  * @apiHeader {String} Authorization Prefixed Google JWT token
+  * @apiHeaderExample {json} Authorization:
+  *   {
+  *     "Authorization": "JWT WVYpCSuZiyxyr4j1ZUScxn7JjOjenlaEDPJmuNvgooXpgZyN8kDly6p5L23J"
+  *   }
+  * @apiError {String} AuthError Unauthorized
+  * @apiErrorExample {String} Response:
+  *     HTTP/1.1 401 Unauthorized
+  *     Unauthorized
+*/
+
 let loginHandler = (googleUser, resolve) => {
   debug('handle login for "%s"', googleUser.sub)
   User.findOne({

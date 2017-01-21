@@ -18,7 +18,7 @@ const score = require('./score')
 router.param('googleid', googleIdParam)
 
 router.get('/', (req, res) => {
-  res.send('You are in the user v1 router')
+  res.json(req.user.getPublicUser())
 })
 
 router.get('/leaderboard', (req, res) => {
