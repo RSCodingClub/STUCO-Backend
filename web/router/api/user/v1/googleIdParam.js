@@ -6,9 +6,14 @@ const User = require('../../../../../models/User')
 /**
   * @apiDefine GoogleIdParam
   * @apiParam {String} googleid A user's Google profile's unique identifier
-  * @apiParamExample {String} GoogleId-Example:
+  * @apiParamExample {String} GoogleId Example
   *     "108718953214804737014"
-  * @apiError UserNotFound The user <code>googleid</code> was not found
+  * @apiError {json} UserNotFound The requested user was unable to be found.
+  * @apiErrorExample {json} User Not Found Error
+        {
+          "error": "User Not Found",
+          "errorid": 0
+        }
 */
 debug('load parser')
 const googleIdParam = (req, res, next, googleid) => {
