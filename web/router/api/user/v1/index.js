@@ -17,10 +17,44 @@ const score = require('./score')
 
 router.param('googleid', googleIdParam)
 
+/**
+  * @api {get} /api/user/v1/ Get current user
+  * @apiVersion 1.0.0
+  * @apiName GetSelfUser
+  * @apiGroup User
+  * @apiDescription Returns the public profile of the currently authenticated user
+  *
+  * @apiUse AuthParam
+  *
+  * @apiSuccess {Object} user The user's public profile
+  * @apiSuccess {String} user.uid The user's unique id
+  * @apiSuccess {String} user.name The user's name
+  * @apiSuccess {String} user.nickname The user's nickname
+  * @apiSuccess {Number} user.score The user's total score
+  * @apiSuccess {Number[]} user.badges List of badge ids the user has
+  * @apiSuccess {Strine} user.role The users current permission role
+*/
 router.get('/', (req, res) => {
   res.json(req.user.getPublicUser())
 })
 
+/**
+  * @api {get} /api/user/v1/leaderboard Get the leaderboard
+  * @apiVersion 1.0.0
+  * @apiName GetLeaderboard
+  * @apiGroup User
+  * @apiDescription Returns an array of the public profile in order of score
+  *
+  * @apiUse AuthParam
+  *
+  * @apiSuccess {Object[]} user The user's public profile
+  * @apiSuccess {String} user.uid The user's unique id
+  * @apiSuccess {String} user.name The user's name
+  * @apiSuccess {String} user.nickname The user's nickname
+  * @apiSuccess {Number} user.score The user's total score
+  * @apiSuccess {Number[]} user.badges List of badge ids the user has
+  * @apiSuccess {Strine} user.role The users current permission role
+*/
 router.get('/leaderboard', (req, res) => {
   User.getLeaderboard().then((leaderboard) => {
     res.json(leaderboard)

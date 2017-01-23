@@ -8,15 +8,40 @@ const router = new Router()
 
 // Export all router files for user name api (ei get, set)
 
+/**
+  * @api {get} /api/user/v1/:googleid/name Get a user's name
+  * @apiVersion 1.0.0
+  * @apiName GetName
+  * @apiGroup User
+  * @apiDescription Returns the name of the target user
+  *
+  * @apiUse AuthParam
+  *
+  * @apiSuccess {String} name The user's name
+*/
 router.get('/', (req, res) => {
   // Return a user's name
-  res.send(req.targetUser.name)
+  return res.send(req.targetUser.name)
 })
 
+/**
+  * @api {put} /api/user/v1/:googleid/name Set a user's name
+  * @apiVersion 1.0.0
+  * @apiName SetName
+  * @apiGroup User
+  * @apiDescription Set a new name for the target user
+  *
+  * @apiUse AuthParam
+  * @apiPermission teacher
+  * @apiPermission developer
+  * @apiPermission admin
+  *
+  * @apiSuccess {String} name The user's new name
+*/
 router.put('/', permission(['teacher', 'developer', 'admin']), (req, res) => {
   // Don't allow users to change their own name
   if (req.isSelf) {
-    res.error('Permission Requirements Not Met')
+    return res.error('Permission Requirements Not Met')
   }
   if (req.body.name == null) {
     return res.error('Body Parameters Not Met')

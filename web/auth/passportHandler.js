@@ -9,12 +9,12 @@ const debug = require('debug')('stuco:web:auth:passporthandler')
 /**
   * @apiDefine AuthParam
   * @apiHeader {String} Authorization Prefixed Google JWT token
-  * @apiHeaderExample {json} Authorization:
+  * @apiHeaderExample {json} Authorization
   *   {
-  *     "Authorization": "JWT WVYpCSuZiyxyr4j1ZUScxn7JjOjenlaEDPJmuNvgooXpgZyN8kDly6p5L23J"
+  *     "Authorization": "JWT WVYpCSuZiyx.yr4j1ZUScxn7JjOjenlaEDPJmuNvgooXpgZyN.8kDly6p5L23J"
   *   }
-  * @apiError {String} AuthError Unauthorized
-  * @apiErrorExample {String} Response:
+  * @apiError {String} AuthError User was unable to be authenticated
+  * @apiErrorExample {String} Authentication Error
   *     HTTP/1.1 401 Unauthorized
   *     Unauthorized
 */
