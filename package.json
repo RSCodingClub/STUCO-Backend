@@ -4,11 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "npm run eslint && npm run nsp && npm run mocha",
     "eslint": "./node_modules/.bin/eslint .",
     "nsp": "./node_modules/.bin/nsp check --warn-only",
     "mocha": "./node_modules/.bin/mocha --recursive",
-    "configure": "",
+    "configure": "echo \"This will eventually have a CLI tool for setting each option\"",
     "dbinitbadges": "node ./scripts/database/badges.init",
     "postinstall": "npm run configure && npm run dbinitbadges"
   },

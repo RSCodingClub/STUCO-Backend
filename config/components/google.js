@@ -6,6 +6,7 @@ const {error, value: envVars} = joi.validate(process.env, joi.object({
   GOOGLE_CALENDAR_ID: joi.string().required(),
   GOOGLE_CLIENT_ID: joi.string().required(),
   GOOGLE_CLIENT_SECRET: joi.string().required(),
+  GOOGLE_CLIENT_FILE: joi.string().required(),
   GOOGLE_SERVICE_CLIENT_EMAIL: joi.string().required(),
   GOOGLE_SERVICE_CLIENT_KEY: joi.string().required()
 }).unknown().required())
@@ -20,6 +21,7 @@ const config = {
       clientSecret: envVars.GOOGLE_CLIENT_SECRET
     },
     serviceAccount: {
+      clientFile: envVars.GOOGLE_CLIENT_FILE,
       clientEmail: envVars.GOOGLE_SERVICE_CLIENT_EMAIL,
       clientKey: envVars.GOOGLE_SERVICE_CLIENT_KEY
     }

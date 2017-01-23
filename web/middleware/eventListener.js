@@ -1,5 +1,6 @@
 'use strict'
 
+const path = require('path')
 const uuid = require('uuid')
 const logger = require('winston')
 const google = require('googleapis')
@@ -51,11 +52,7 @@ let handler = (req, res) => {
     auth().then((authClient) => {
       getEvents({calendarId: config.google.calendarId, auth: authClient, key: config.google.apiKey, syncToken: lastSyncToken, timeZone: 'UTC'}).then((events) => {
         // NOTE: Possibly stupid code, potentially revise
-        processEvents(events).then((events) => {
-          return resolve(events)
-        }).catch((processEventsError) => {
-          return reject(processEventsError)
-        })
+        processEvents(events).then(resolve).catch(reject)
       }).catch((getEventsError) => {
         return reject(getEventsError)
       })
@@ -69,8 +66,8 @@ let handler = (req, res) => {
 }
 
 let auth = () => {
-  // TODO: Move or find an alternative to using private json files to authenticate
-  let authClient = new google.auth.JWT(config.google.serviceAccount.clientEmail, '../private/GoogleTest-b468be9d42ba.json', config.google.serviceAccount.clientKey, ['https://www.googleapis.com/auth/calendar'], config.google.serviceAccount.clientEmail)
+  // TODO: Figure out how to avoid using a file at all
+  let authClient = new google.auth.JWT(config.google.serviceAccount.clientEmail, path.join('../../', config.google.serviceAccount.clientFile), config.google.serviceAccount.clientKey, ['https://www.googleapis.com/auth/calendar'], config.google.serviceAccount.clientEmail)
   return new Promise((resolve, reject) => {
     authClient.authorize((authorizationError, tokens) => {
       if (authorizationError) {
