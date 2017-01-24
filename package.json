@@ -36,7 +36,7 @@
     "morgan": "^1.7.0",
     "node-cache": "^4.1.1",
     "passport": "^0.3.2",
-    "passport-jwt": "github:itotallyrock/passport-jwt",
+    "passport-jwt": "itotallyrock/passport-jwt",
     "passport-localapikey": "0.0.3",
     "permission": "^1.0.4",
     "request": "^2.76.0",
