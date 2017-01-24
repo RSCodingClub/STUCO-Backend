@@ -8,15 +8,25 @@ debug('mongodb connect to "mongodb://' + config.mongodb.user + ':' + '*******' +
 mongoose.Promise = global.Promise
 mongoose.connect('mongodb://' + config.mongodb.user + ':' + config.mongodb.password + '@' + config.mongodb.host + ':' + config.mongodb.port + '/' + config.mongodb.database).then(() => {
   debug('connected')
-  Badge.collection.insertMany(badges, (dbError, dbInfo) => {
-    if (dbError) {
-      throw dbError
-    }
-    debug('inserted or replaced %d badges', dbInfo.insertedCount)
+  Promise.all(badges.map((badge) => {
+    return Badge.update({
+      bid: badge.bid
+    }, badge, {
+      upsert: true,
+      multi: true,
+      runValidators: true
+    })
+  })).then((dbInfo) => {
+    console.log('modified ' + dbInfo.reduce((previous, current, interval) => {
+      if (interval === 1) {
+        return previous.nModified + current.nModified
+      } return previous + current.nModified
+    }) + ' badges')
     process.exit(0)
+  }).catch((dbError) => {
+    throw dbError
   })
 }).catch((dbConnectError) => {
   debug('failed to connect', dbConnectError)
-  process.exit(1)
   throw dbConnectError
 })
