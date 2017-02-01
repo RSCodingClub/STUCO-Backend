@@ -47,7 +47,11 @@ module.exports = new Promise((resolve, reject) => {
     debug('init middlewares')
     // passport
     app.use(passport.initialize())
-    app.use('/api', passport.authenticate('jwt', {session: false}))
+    if (config.isTest) {
+      app.use('/api', passport.authenticate(['localapikey', 'jwt'], {session: false}))
+    } else {
+      app.use('/api', passport.authenticate('jwt', {session: false}))
+    }
     auth.passportHandler()
     auth.passportSerializer()
     // Custom middleware
