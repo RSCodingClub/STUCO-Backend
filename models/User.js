@@ -53,7 +53,12 @@ let UserSchema = new Schema({
   apikey: {
     type: String,
     default: () => {
-      return require('crypto').randomBytes(24).toString('base64')
+      return require('crypto')
+        .randomBytes(24)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '')
     }
   },
   created: {
@@ -63,17 +68,17 @@ let UserSchema = new Schema({
   lastlogin: {
     type: Date,
     default: new Date()
+  },
+  updated: {
+    type: Date,
+    default: new Date()
   }
 })
 
 UserSchema.pre('save', function (next) {
   const debug = require('debug')('stuco:model:user:presave')
   debug('adding updated_at, created_at, and lastlogin parameters to user')
-  this.updated_at = new Date()
-  if (!this.created_at) {
-    this.created_at = new Date()
-    this.lastlogin = new Date()
-  }
+  this.updated = new Date()
   // Check to see if we need to give new badges for score increase
   let badgeJobs = []
   if (this.getScore() >= 50 && !this.hasBadge(22)) {
