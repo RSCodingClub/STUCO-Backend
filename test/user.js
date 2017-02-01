@@ -45,14 +45,16 @@ describe('User API', function () {
       done()
     })
     describe('Get Leaderboard', function () {
-      it('should be json', function (done) {
+      it('Should get array of users', function (done) {
         chai.request(app)
           .get('/api/user/v1/leaderboard')
-          .set('Authorization', 'KEY ' + apiKey)
+          .query({key: apiKey})
+          .set('Authorization', 'KEY ' + apiKey) // Authenticate with api key
           .send()
           .then((response) => {
             expect(response).to.have.status(200)
             expect(response).to.be.json
+            expect(response).to.be.an.array
             done()
           }).catch((err) => {
             done(err)
