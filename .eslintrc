@@ -10,7 +10,7 @@
             "warn"
         ],
         "no-console": [
-            "off"
+            "warn"
         ]
     }
 }

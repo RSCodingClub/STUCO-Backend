@@ -11,6 +11,7 @@ const passport = require('passport')
 const methodOverride = require('method-override')
 const app = express()
 
+const config = require('../config')
 const auth = require('./auth')
 const middleware = require('./middleware')
 const router = require('./router')
@@ -25,7 +26,9 @@ app.use(bodyParser.json({type: 'application/vnd.api+json'}))
 app.use(methodOverride())
 
 // morgan
-app.use(morgan('tiny', {stream: middleware.requestLogger.stream}))
+if (!config.isTest) {
+  app.use(morgan('tiny', {stream: middleware.requestLogger.stream}))
+}
 
 // helmet
 app.use(helmet())
@@ -44,7 +47,11 @@ module.exports = new Promise((resolve, reject) => {
     debug('init middlewares')
     // passport
     app.use(passport.initialize())
-    app.use('/api', passport.authenticate('jwt', {session: false}))
+    if (config.isTest) {
+      app.use('/api', passport.authenticate(['localapikey', 'jwt'], {session: false}))
+    } else {
+      app.use('/api', passport.authenticate('jwt', {session: false}))
+    }
     auth.passportHandler()
     auth.passportSerializer()
     // Custom middleware

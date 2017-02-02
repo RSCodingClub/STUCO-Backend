@@ -2,8 +2,10 @@ const passport = require('passport')
 const User = require('../../models/User')
 const config = require('../../config')
 const googleCertificates = require('./googleCertificates')
+const API = require('passport-localapikey')
 const JWT = require('passport-jwt')
 const jwt = require('jsonwebtoken')
+const logger = require('winston')
 const debug = require('debug')('stuco:web:auth:passporthandler')
 
 /**
@@ -20,36 +22,55 @@ const debug = require('debug')('stuco:web:auth:passporthandler')
 */
 
 let loginHandler = (googleUser, resolve) => {
-  debug('handle login for "%s"', googleUser.sub)
+  debug('handle login for ' + googleUser.sub)
   User.findOne({
     uid: googleUser.sub
-  }, (err, user) => {
-    if (err) {
-      return resolve(err, false)
-    }
-    if (user) {
+  }).then((dbUser) => {
+    if (dbUser != null) {
       debug('user found')
-      user.lastlogin = new Date()
-      user.save().then((dbUser) => {
+      dbUser.lastlogin = new Date()
+      dbUser.save().then((dbUser) => {
         return resolve(null, dbUser)
       }).catch((dbError) => {
         return resolve(dbError)
       })
     } else {
-      debug('user not found creating user "%s"', googleUser.sub)
+      debug('user not found creating user ' + googleUser.sub)
       User.createUser(googleUser).then((dbUser) => {
-        debug('create user succeeded "%s"', googleUser.sub)
+        debug('create user succeeded ' + googleUser.sub)
         return resolve(null, dbUser)
       }).catch((userCreationError) => {
         debug('create user failed "%s" %O', googleUser.sub, userCreationError.message)
         return resolve(userCreationError)
       })
     }
+  }).catch((dbError) => {
+    logger.error(dbError, {context: 'dbError'})
+    return resolve(dbError, false)
+  })
+}
+
+let apiHandler = (req, apikey, done) => {
+  debug('localAPIStrategy passed API Key')
+  User.findOne({apikey: apikey}).then((user) => {
+    if (!user) {
+      return done(null, false)
+    }
+    req.user = user
+    return done(null, user)
+  }).catch((dbError) => {
+    logger.error(dbError, {context: 'dbError'})
+    return done(dbError)
   })
 }
 
 let init = () => {
   debug('init')
+  const localAPIStrategy = new API.Strategy({
+    passReqToCallback: true,
+    apiKeyField: 'key',
+    apiKeyHeader: 'Authorization'
+  }, apiHandler)
   const ExtractJwt = JWT.ExtractJwt
   const jwtStategy = new JWT.Strategy({
     authScheme: 'Token',
@@ -72,6 +93,10 @@ let init = () => {
       }
     }
   }, loginHandler)
+  if (config.isTest) {
+    debug('use passport strategy apiKeyStrategy')
+    passport.use(localAPIStrategy)
+  }
   debug('use passport strategy jwtStrategy')
   passport.use(jwtStategy)
 }

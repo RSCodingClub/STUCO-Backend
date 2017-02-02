@@ -9,7 +9,7 @@
     "eslint": "./node_modules/.bin/eslint .",
     "nsp": "./node_modules/.bin/nsp check --warn-only",
     "mocha": "./node_modules/.bin/mocha --recursive",
-    "configure": "echo \"This will eventually have a CLI tool for setting each option\"",
+    "configure": "echo \"This will possible have a CLI tool for setting each option\"",
     "dbinitbadges": "node ./scripts/database/badges.init",
     "postinstall": "npm run configure && npm run dbinitbadges"
   },
@@ -28,7 +28,7 @@
     "github": "^7.2.0",
     "googleapis": "^16.0.0",
     "helmet": "^3.3.0",
-    "joi": "^10.1.0",
+    "joi": "^10.2.0",
     "jsonwebtoken": "^7.0.1",
     "method-override": "^2.3.5",
     "moment-timezone": "^0.5.11",
@@ -48,13 +48,12 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
+    "chai-http": "^3.0.0",
     "eslint": "^3.8.1",
     "eslint-config-standard": "^6.2.1",
     "eslint-plugin-promise": "^3.4.0",
     "eslint-plugin-standard": "^2.0.1",
     "mocha": "^3.1.2",
-    "nsp": ">=2.6.1",
-    "sinon": "^1.17.7",
-    "supertest": "^2.0.1"
+    "nsp": ">=2.6.1"
   }
 }
