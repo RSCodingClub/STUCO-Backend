@@ -17,48 +17,151 @@ describe('User API', function () {
     }).catch(done)
   })
 
-  describe('Unauthenticated', function () {
-    describe('Get Leaderboard', function () {
-      it('should be error', function (done) {
+  describe('Get Leaderboard', function () {
+    let response
+    describe('Authenticated', function () {
+      before(function (done) {
         chai.request(app)
           .get('/api/user/v1/leaderboard')
+          .query({key: config.test.apiKey})
           .send()
-          .then((response) => {
-            done(new Error('Response was supposed to error'))
-          }).catch((err) => {
-            err.response.should.have.status(401)
-            err.response.text.should.be.a('string')
-            err.response.text.should.equal('Unauthorized')
-            done()
-          })
-      })
-    })
-  })
-
-  describe('Authenticated', function () {
-    let apiKey
-    before(function (done) {
-      if (config.test.apiKey == null) {
-        throw new Error('TEST_API_KEY is a required variable when testing.')
-      }
-      apiKey = config.test.apiKey
-      done()
-    })
-    describe('Get Leaderboard', function () {
-      it('Should get array of users', function (done) {
-        chai.request(app)
-          .get('/api/user/v1/leaderboard')
-          .query({key: apiKey})
-          .set('Authorization', 'KEY ' + apiKey) // Authenticate with api key
-          .send()
-          .then((response) => {
-            expect(response).to.have.status(200)
-            expect(response).to.be.json
-            expect(response).to.be.an.array
+          .then((resp) => {
+            response = resp
             done()
           }).catch((err) => {
             done(err)
           })
+      })
+      it('Should return 200', () => {
+        expect(response).to.have.status(200)
+      })
+      it('Should be return an array', () => {
+        expect(response).to.be.json
+        expect(response.body).to.be.an('array')
+      })
+      it('Should be have at least one user', () => {
+        expect(response.body).to.have.length.of.at.least(1)
+      })
+    })
+
+    describe('Unauthenticated', function () {
+      before(function (done) {
+        chai.request(app)
+          .get('/api/user/v1/leaderboard')
+          .send()
+          .then((resp) => {
+            done(new Error('Response was supposed to error'))
+          }).catch((err) => {
+            response = err.response
+            done()
+          })
+      })
+      it('Should return 401', () => {
+        expect(response).to.have.status(401)
+      })
+      it('Should be return Unauthorized', () => {
+        expect(response.text).to.be.a('string')
+        expect(response.text).to.equal('Unauthorized')
+      })
+    })
+  })
+
+  describe('Get Authenticated User', function () {
+    let response
+    describe('Authenticated', function () {
+      before(function (done) {
+        chai.request(app)
+          .get('/api/user/v1/')
+          .query({key: config.test.apiKey})
+          .send()
+          .then((resp) => {
+            response = resp
+            done()
+          }).catch((err) => {
+            done(err)
+          })
+      })
+      it('Should return 200', () => {
+        expect(response).to.have.status(200)
+      })
+      it('Should be return an object', () => {
+        expect(response).to.be.json
+        expect(response.body).to.be.an('object')
+      })
+      it('Should contain userid and name', () => {
+        expect(response.body.uid).to.not.be.null
+        expect(response.body.name).to.not.be.null
+      })
+    })
+
+    describe('Unauthenticated', function () {
+      before(function (done) {
+        chai.request(app)
+          .get('/api/user/v1/leaderboard')
+          .send()
+          .then((resp) => {
+            done(new Error('Response was supposed to error'))
+          }).catch((err) => {
+            response = err.response
+            done()
+          })
+      })
+      it('Should return 401', () => {
+        expect(response).to.have.status(401)
+      })
+      it('Should be return Unauthorized', () => {
+        expect(response.text).to.be.a('string')
+        expect(response.text).to.equal('Unauthorized')
+      })
+    })
+  })
+
+  describe('Get Another User', function () {
+    let response
+    describe('Authenticated', function () {
+      before(function (done) {
+        chai.request(app)
+          .get('/api/user/v1/' + config.test.userid)
+          .query({key: config.test.apiKey})
+          .send()
+          .then((resp) => {
+            response = resp
+            done()
+          }).catch((err) => {
+            done(err)
+          })
+      })
+      it('Should return 200', () => {
+        expect(response).to.have.status(200)
+      })
+      it('Should be return an object', () => {
+        expect(response).to.be.json
+        expect(response.body).to.be.an('object')
+      })
+      it('Should contain userid and name', () => {
+        expect(response.body.uid).to.not.be.null
+        expect(response.body.name).to.not.be.null
+      })
+    })
+
+    describe('Unauthenticated', function () {
+      before(function (done) {
+        chai.request(app)
+          .get('/api/user/v1/leaderboard')
+          .send()
+          .then((resp) => {
+            done(new Error('Response was supposed to error'))
+          }).catch((err) => {
+            response = err.response
+            done()
+          })
+      })
+      it('Should return 401', () => {
+        expect(response).to.have.status(401)
+      })
+      it('Should be return Unauthorized', () => {
+        expect(response.text).to.be.a('string')
+        expect(response.text).to.equal('Unauthorized')
       })
     })
   })
