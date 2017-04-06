@@ -60,6 +60,26 @@ let EventSchema = new mongoose.Schema({
   collection: 'events-' + config.google.calendarId.split('@')[0]
 })
 
+EventSchema.pre('validate', function (next) {
+  const debug = require('debug')('stuco:model:event:pre:validate')
+  debug('parse event category from title and description')
+  // Mode method credit to Anjuna5 on stack exchange
+  function mode (arr) {
+    debug('mode of array calculator')
+    return [...new Set(arr)]
+      .map((value) => [value, arr.filter((v) => v === value).length])
+      .sort((a, b) => a[1] - b[1])
+      .reverse()
+      .filter((value, i, a) => a.indexOf(value) === i)
+      .filter((v, i, a) => v[1] === a[0][1])
+      .map((v) => v[0])
+  }
+  let categories = (/(football|dance|volleyball|baseball|basketball|softball|tennis|lacrosse|art\w*|theater|choir|band|orchestra|field(-| )?hockey|hockey|waterpolo|swimming|club|pep\w*|other)/gi).exec(this.summary + ' ' + this.description)
+  if (categories.length === 0) categories = ['other']
+  this.category = mode(categories)[0].toLowerCase()
+  return next()
+})
+
 // Formatting
 EventSchema.methods.toString = function () {
   const debug = require('debug')('stuco:model:event:tostring')
