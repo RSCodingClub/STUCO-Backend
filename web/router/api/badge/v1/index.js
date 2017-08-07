@@ -39,7 +39,7 @@ router.get('/', (req, res) => {
   }).catch((dbError) => {
     debug('failed database request')
     logger.error(dbError, {context: dbError})
-    return res.error()
+    return res.status(500).error()
   })
 })
 
@@ -68,7 +68,7 @@ router.get('/:badgeid', (req, res) => {
 // TODO: Implement potentially
 /**
   * @apiIgnore Not implemented yet
-  * @api {get} /api/badge/v1/:badgeid Create a new badge
+  * @api {put} /api/badge/v1/:badgeid Create a new badge
   * @apiVersion 1.0.0
   * @apiName PutBadge
   * @apiGroup Badges

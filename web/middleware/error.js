@@ -1,4 +1,4 @@
-const logger = require('winston')
+
 const debug = require('debug')('stuco:web:middleware:error')
 let errorCodes = {
   'User Not Found': 0,
@@ -7,7 +7,7 @@ let errorCodes = {
   'Invalid Location Data': 3,
   'Google Token Validation Failed': 4,
   'TokenIssuer is Invalid': 5,
-  'Invalid TokenCertificate': 6,
+  'Invalid Token Certificate': 6,
   'UserToken Has Expired': 7,
   'Not At Event Location': 8,
   'Already Checked Into Event': 9,
@@ -31,27 +31,26 @@ let errorCodes = {
 }
 
 let error = (req, res, next) => {
-  res.error = (error, httpStatusCode) => {
+  debug('initializing response error method')
+  res.error = (error) => {
+    debug('response error method called')
     if (error == null) {
       debug('assuming unxpected since error was null')
       error = 'Unexpected Error'
-      httpStatusCode = 500
     }
     if (!(error instanceof Error)) {
-      // Log only 500 errors
       error = new Error(error.toString().replace(/(?:\r\n|\r|\n)/g, '').trim())
     }
-    if (httpStatusCode >= 500) {
-      logger.error(error)
-    }
-    return res.status(httpStatusCode || 400).json({
+    return res.json({
       error: error.message,
       errorid: errorCodes[error.message] == null
         ? -1
         : errorCodes[error.message]
     })
   }
-  next()
+  debug('initialized response error method')
+  return next()
 }
 
-module.exports = error
+module.exports.inject = error
+module.exports.errorCodes = errorCodes

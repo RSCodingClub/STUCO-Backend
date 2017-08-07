@@ -1,6 +1,7 @@
 'use strict'
 
 const express = require('express')
+const logger = require('winston')
 const Router = express.Router
 const router = new Router()
 const config = require('../../../../../config')
@@ -24,8 +25,8 @@ router.get(['/', '/:limit(\\d+)/:index(\\d+)'], (req, res) => {
       return evnt.getPublicEvent()
     }))
   }).catch((dbError) => {
-    // NOTE: We don't want to send detailed database information to the end user
-    res.error(dbError)
+    logger.error(dbError, {'context': 'dbError'})
+    res.status(500).error()
   })
 })
 
@@ -43,8 +44,8 @@ router.post(['/', '/:limit(\\d+)/:index(\\d+)'], (req, res) => {
       return e
     }))
   }).catch((dbError) => {
-    // NOTE: We don't want to send detailed database information to the end user
-    res.error(dbError)
+    logger.error(dbError, {'context': 'dbError'})
+    res.status(500).error(dbError)
   })
 })
 

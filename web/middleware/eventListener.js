@@ -14,12 +14,12 @@ let channelId
 let ttl = config.isDevelopment ? 600 : 7200 // 2 hours for production, shorter times for development
 let lastSyncToken
 
-let init = () => {
-  debug('init')
-  return new Promise((resolve, reject) => {
-    auth().then((authClient) => {
-      channelId = uuid.v4()
-      watchEvents({
+async function initialize () {
+  try {
+    let authClient = await auth()
+    channelId = uuid.v4()
+    try {
+      let response = await watchEvents({
         calendarId: config.google.calendarId,
         auth: authClient,
         key: config.google.apiKey,
@@ -33,39 +33,32 @@ let init = () => {
             ttl: ttl
           }
         }
-      }).then((response) => {
-        // NOTE: We originally got events at this point but, watching events will trigger a request in which we request events anyways
-        // Renew watch 10 seconds before TTL expires
-        setTimeout(init, (ttl - 10) * 1000)
-        return resolve(response)
-      }).catch((watchEventsError) => {
-        return reject(watchEventsError)
       })
-    }).catch((authorizationError) => {
-      return reject(authorizationError)
-    })
-  })
+      setTimeout(initialize, (ttl - 10) * 1000)
+      return response
+    } catch (watchEventsError) {
+      debug('watch events error')
+      throw watchEventsError
+    }
+  } catch (authorizationError) {
+    debug('authorization error with google calendar')
+    throw authorizationError
+  }
 }
 
-let handler = (req, res) => {
-  return new Promise((resolve, reject) => {
-    auth().then((authClient) => {
-      getEvents({calendarId: config.google.calendarId, auth: authClient, key: config.google.apiKey, syncToken: lastSyncToken, timeZone: 'UTC'}).then((events) => {
-        // NOTE: Possibly stupid code, potentially revise
-        processEvents(events).then(resolve).catch(reject)
-      }).catch((getEventsError) => {
-        return reject(getEventsError)
-      })
-    }).catch((authorizationError) => {})
-  }).then((events) => {
-    res.status(200).send('Successfully Retrieved Google Events')
-  }).catch((eventListenerError) => {
+async function handler (request, response) {
+  let authClient = await auth()
+  let events = await getEvents({calendarId: config.google.calendarId, auth: authClient, key: config.google.apiKey, syncToken: lastSyncToken, timeZone: 'UTC'})
+  try {
+    await processEvents(events)
+    return response.status(200).send('Successfully Retrieved Google Events')
+  } catch (eventListenerError) {
     debug('error handling event update', eventListenerError)
-    res.status(500).error('Error Retrieving Google Events', 500)
-  })
+    return response.status(500).error('Error Retrieving Google Events', 500)
+  }
 }
 
-let auth = () => {
+async function auth () {
   // TODO: Figure out how to avoid using a file at all
   let authClient = new google.auth.JWT(config.google.serviceAccount.clientEmail, path.join('../../', config.google.serviceAccount.clientFile), config.google.serviceAccount.clientKey, ['https://www.googleapis.com/auth/calendar'], config.google.serviceAccount.clientEmail)
   return new Promise((resolve, reject) => {
@@ -80,7 +73,7 @@ let auth = () => {
   })
 }
 
-let watchEvents = (options) => {
+async function watchEvents (options) {
   return new Promise((resolve, reject) => {
     calendar.events.watch(options, (initializeWatchError, response) => {
       if (initializeWatchError) {
@@ -130,26 +123,23 @@ let getEvents = (options) => {
   })
 }
 
-let processEvents = (events) => {
+async function processEvents (events) {
   debug('process ' + events.length + ' events')
-  events.filter((evnt) => {
-    return evnt.status === 'cancelled' && evnt.location != null
-  })
-  return new Promise((resolve, reject) => {
-    Promise.all(events.filter((evnt) => {
+  try {
+    let responses = await Promise.all(events.filter((evnt) => {
       return evnt.status !== 'cancelled' && evnt.location != null
-    }).map(Evnt.addEvent)).then((responses) => {
-      logger.info('Calendar updated, ' + (responses.length || 0) + ' events changed.')
-      return resolve(responses)
-    }).catch((dbError) => {
-      logger.error('Database error saving events.')
-      return reject(dbError)
-    })
-  })
+    }).map(Evnt.addEvent))
+    logger.info('Calendar updated, ' + (responses.length || 0) + ' events changed.')
+    return responses
+  } catch (dbError) {
+    logger.error('Database error saving events.')
+    throw dbError
+  }
 }
 
 process.on('exit', () => {
   debug('revoking webhook on channel ' + channelId)
+  // NOTE: Comments below remove code that is unnecessary and may cause errors if they are undefined or empty
   stopWatching({
     // auth: authClient,
     key: config.google.apiKey,
@@ -162,4 +152,4 @@ process.on('exit', () => {
 })
 
 module.exports.handler = handler
-module.exports.init = init
+module.exports.init = initialize

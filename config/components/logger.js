@@ -12,7 +12,7 @@ const {error, value: envVars} = joi.validate(process.env, joi.object({
     'silly'
   ]).default('info'),
   // Whether or not to log at all
-  LOGGER_ENABLED: joi.boolean().truthy('TRUE').truthy('true').falsy('FALSE').falsy('false').default(true),
+  LOGGER_ENABLED: joi.boolean().default('true').truthy('TRUE').truthy('true').falsy('FALSE').falsy('false'),
   PAPERTRAIL_URL: joi.string(),
   PAPERTRAIL_PORT: joi.number().min(1).max(65535)
 }).unknown().required())

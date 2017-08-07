@@ -38,18 +38,18 @@ let after = (req, res, next, authStatus) => {
     /*
     Use the following code segment to ignore is self
     if (req.isSelf) {
-      return res.error('Permission Requirements Not Met')
+      return res.status(403).error('Permission Requirements Not Met')
     }
     */
     if (req.user.uid === req.targetUser.uid) {
       req.isSelf = true
       return next()
     }
-    return res.error('Permission Requirements Not Met')
+    return res.status(403).error('Permission Requirements Not Met')
   } else if (authStatus === permission.NOT_AUTHENTICATED) {
-    return res.error('Missing or Invalid Authentication Header')
+    return res.status(400).error('Missing or Invalid Authentication Header')
   } else {
-    return res.error('authorizationError')
+    return res.status(401).error('Authorization Error')
   }
 }
 

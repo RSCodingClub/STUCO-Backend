@@ -47,7 +47,7 @@ github.authenticate({type: 'token', token: config.github.access_token})
 */
 router.post('/', (req, res) => {
   if (req.body.bugtype == null || req.body.summary == null || req.body.summary.trim() === '' || req.body.description == null || req.body.description === '') {
-    return res.error('Body Parameters Not Met')
+    return res.status(400).error('Body Parameters Not Met')
   } else {
     // NOTE: We may possibly want to store reports locally as well as setup a webhook to update them from github as they are closed, edited, or labeled
     new Bugreport({
@@ -70,11 +70,11 @@ router.post('/', (req, res) => {
         return res.json(dbBug.pretty())
       }).catch((githubError) => {
         logger.error(githubError, {context: 'githubError'})
-        return res.error()
+        return res.status(500).error()
       })
     }).catch((dbError) => {
       logger.error(dbError, {context: 'dbError'})
-      return res.error()
+      return res.status(500).error()
     })
   }
 })

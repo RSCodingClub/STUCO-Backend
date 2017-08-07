@@ -13,9 +13,11 @@ const event = require('./event')
 // Export all router files for user api
 // URL Base '/api'
 router.use(new RateLimit({
+  // NOTE: Currently based off of IP, we could change this to be based on a per user basis
   headers: true,
   windowMs: 60 * 60 * 1000, // 60 minutes
-  max: config.isDevelopment ? 1500 : 300
+  max: config.isDevelopment ? 1500 : 300,
+  delayMs: 0
 }))
 
 router.use('/user', user)

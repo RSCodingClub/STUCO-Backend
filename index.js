@@ -5,13 +5,18 @@ const logger = require('winston')
 const server = require('./web')
 
 // TODO: Cluster this
-server.then(server => {
-  // TODO: Do stuff with server object
-}).catch((startupError) => {
-  // TODO: Handle error, possibly relaunch child process worker
-  logger.error(startupError)
-  process.exit(1)
-})
+async function startup () {
+  try {
+    await server
+  } catch (startupError) {
+    // TODO: Handle error, possibly relaunch child process worker
+    logger.error(startupError)
+    process.exit(1)
+  }
+}
+
+// Start it all
+startup()
 
 process.on('warning', (warning) => {
   console.log('warning')

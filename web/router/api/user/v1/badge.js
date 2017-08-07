@@ -18,10 +18,10 @@ router.get('/', (req, res) => {
 
 router.put('/:badgeid', permission(['developer', 'admin']), (req, res) => {
   if (req.isSelf) {
-    return res.error('Permission Requirements Not Met')
+    return res.status(403).error('Permission Requirements Not Met')
   }
   if (req.targetUser.hasBadge(req.targetBadge.bid)) {
-    return res.error('User Already Has Badge')
+    return res.status(400).error('User Already Has Badge')
   }
   req.targetUser
     .giveBadge(req.targetBadge.bid)
@@ -30,20 +30,20 @@ router.put('/:badgeid', permission(['developer', 'admin']), (req, res) => {
         res.json(dbUser.badges)
       }).catch((dbError) => {
         logger.error(dbError, {context: 'dbError'})
-        res.error()
+        res.status(500).error()
       })
     })
     .catch((giveBadgeError) => {
-      res.error('Failed to Give User Badge', 500)
+      res.status(500).error('Failed to Give User Badge')
     })
 })
 
 router.delete('/:badgeid', permission(['developer', 'admin']), (req, res) => {
   if (req.isSelf) {
-    return res.error('Permission Requirements Not Met')
+    return res.status(500).error('Permission Requirements Not Met')
   }
   if (!req.targetUser.hasBadge(req.targetBadge.bid)) {
-    return res.error('User Doesn\'t Have Badge')
+    return res.status(500).error('User Doesn\'t Have Badge')
   }
   req.targetUser
     .takeBadge(req.targetBadge.bid)
@@ -52,7 +52,7 @@ router.delete('/:badgeid', permission(['developer', 'admin']), (req, res) => {
       return res.json(dbUser.badges)
     }).catch((dbError) => {
       logger.error(dbError, {context: 'dbError'})
-      return res.error()
+      return res.status(500).error()
     })
 })
 

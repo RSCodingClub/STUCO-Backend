@@ -7,37 +7,49 @@ const mongoose = require('mongoose')
 const config = require('../config')
 const app = require('./server')
 
-module.exports = new Promise((resolve, reject) => {
-  app.then((readyApp) => {
+async function startup () {
+  try {
+    let readyApp = await app
     debug('create httpServer')
     const server = http.createServer(readyApp)
-    dbConnect()
-    mongoose.connection.on('connected', () => {
-      listen(server)
-      return resolve(server)
-    }).on('error', (mongooseConnectionError) => {
-      return reject(mongooseConnectionError)
-    })
-  }).catch(initializationError => {
-    debug('failed to initialize server app failed to initialize')
-    return reject(initializationError)
-  })
-})
 
-let listen = (server) => {
-  server.listen(config.server.port, (err) => {
-    debug('listening httpServer (pid:%d) on port %d', process.pid, config.server.port)
-    if (err) {
-      logger.error('Error happened during server start', err)
-      process.exit(1)
-    } else {
-      logger.info(`App is listening on port ${config.server.port}`)
-    }
+    await dbConnect()
+    await listen(server)
+
+    return server
+  } catch (initializationError) {
+    debug('failed to initialize server app failed to initialize')
+    throw initializationError
+  }
+}
+
+function listen (server) {
+  return new Promise((resolve, reject) => {
+    server.listen(config.server.port, (serverStartupError) => {
+      debug('listening httpServer (pid:%d) on port %d', process.pid, config.server.port)
+      if (serverStartupError) {
+        logger.error('Error happened during server start', serverStartupError)
+        process.exit(1)
+        return reject(serverStartupError)
+      } else {
+        logger.info(`App is listening on port ${config.server.port}`)
+        return resolve()
+      }
+    })
   })
 }
 
-let dbConnect = () => {
+async function dbConnect () {
   debug('mongodb connect to "mongodb://' + config.mongodb.user + ':' + '*******' + '@' + config.mongodb.host + ':' + config.mongodb.port + '/' + config.mongodb.database + '"')
   mongoose.Promise = global.Promise
-  return mongoose.connect('mongodb://' + config.mongodb.user + ':' + config.mongodb.password + '@' + config.mongodb.host + ':' + config.mongodb.port + '/' + config.mongodb.database)
+  mongoose.connect('mongodb://' + config.mongodb.user + ':' + config.mongodb.password + '@' + config.mongodb.host + ':' + config.mongodb.port + '/' + config.mongodb.database)
+  return new Promise((resolve, reject) => {
+    mongoose.connection.on('connected', () => {
+      return resolve()
+    }).on('error', (mongooseConnectionError) => {
+      reject(mongooseConnectionError)
+    })
+  })
 }
+
+module.exports = startup()

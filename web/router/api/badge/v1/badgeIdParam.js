@@ -11,14 +11,14 @@ const badgeParam = (req, res, next, badgeid) => {
   }).then((dbBadge) => {
     if (dbBadge == null) {
       debug('return badge failed (not found) "%s"', badgeid)
-      return res.error('Badge Not Found', 404)
+      return res.status(404).error('Badge Not Found')
     }
     debug('return badge succeeded "%s"', badgeid) // Possibly print out badge object
     req.targetBadge = dbBadge
     return next()
   }).catch((dbError) => {
     debug('return badge failed', badgeid, dbError)
-    return res.error('Badge Not Found', 404)
+    return res.status(404).error('Badge Not Found')
   })
 }
 

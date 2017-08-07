@@ -7,7 +7,8 @@ const express = require('express')
 const helmet = require('helmet')
 const bodyParser = require('body-parser')
 const morgan = require('morgan')
-const passport = require('passport')
+const jwt = require('express-jwt')
+// const passport = require('passport')
 const methodOverride = require('method-override')
 const app = express()
 
@@ -25,7 +26,7 @@ app.use(bodyParser.json({type: 'application/vnd.api+json'}))
 // methodOverride
 app.use(methodOverride())
 
-// morgan
+// morgan, hide if test
 if (!config.isTest) {
   app.use(morgan('tiny', {stream: middleware.requestLogger.stream}))
 }
@@ -33,29 +34,35 @@ if (!config.isTest) {
 // helmet
 app.use(helmet())
 
-app.use((error, req, res, next) => {
-  logger.error(error)
-  res.error(error, 500)
-})
-
 // permissions
 app.set('permission', middleware.permissionHandler.settings)
 
-module.exports = new Promise((resolve, reject) => {
+async function startup () {
   // custom auth and listen for google event updates
-  Promise.all([auth.googleCertificates(), middleware.eventListener.init()]).then((responses) => {
+  try {
+    await Promise.all([ auth.googleCertificates(), middleware.eventListener.init() ])
     debug('init middlewares')
+    app.use('/api', jwt({
+      secret: auth.jwtHandler.getSecret,
+      algorithms: ['RS256'],
+      issuer: [
+        'https://accounts.google.com', 'accounts.google.com'
+      ],
+      audience: config.google.oauth.clientId,
+      getToken: auth.jwtHandler.getToken
+    }), auth.jwtHandler.handleLogin)
     // passport
-    app.use(passport.initialize())
-    if (config.isTest) {
-      app.use('/api', passport.authenticate(['localapikey', 'jwt'], {session: false}))
-    } else {
-      app.use('/api', passport.authenticate('jwt', {session: false}))
-    }
-    auth.passportHandler()
-    auth.passportSerializer()
+    // app.use(passport.initialize())
+    // if (config.isTest) {
+    //   app.use('/api', passport.authenticate(['localapikey', 'jwt'], {session: false}))
+    // } else {
+    //   app.use('/api', passport.authenticate('jwt', {session: false}))
+    // }
+    // auth.passportHandler()
+    // auth.passportSerializer()
     // Custom middleware
-    app.use(middleware.error)
+    console.log(middleware.error.inject)
+    app.use(middleware.error.inject)
 
     debug('use middleware finished')
 
@@ -71,10 +78,26 @@ module.exports = new Promise((resolve, reject) => {
     app.use([
       '/static', '/res'
     ], express.static(path.join(__dirname, '../public')))
+
+    app.use((error, req, res, next) => {
+      if (error.name === 'UnauthorizedError') {
+        return res.status(401).json({
+          error: 'Invalid UserToken',
+          errorid: middleware.error.errorCodes['Invalid UserToken'] || -1
+        })
+      }
+      logger.error('Uncaught Express Error - ' + error.name)
+      console.error(error)
+      return res.send('ppoop')
+      // return res.status(500).error(config.env.isDevelopment ? error : null)
+    })
+
     debug('use routers finished')
-    return resolve(app)
-  }).catch((initializationError) => {
+    return app
+  } catch (initializationError) {
     debug('init error')
-    return reject(initializationError)
-  })
-})
+    throw initializationError
+  }
+}
+
+module.exports = startup()

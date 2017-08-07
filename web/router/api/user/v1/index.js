@@ -1,5 +1,6 @@
 'use strict'
 
+const logger = require('winston')
 const express = require('express')
 const Router = express.Router
 const router = new Router()
@@ -18,14 +19,7 @@ const score = require('./score')
 router.param('googleid', googleIdParam)
 
 /**
-  * @api {get} /api/user/v1/ Get current user
-  * @apiVersion 1.0.0
-  * @apiName GetSelfUser
-  * @apiGroup User
-  * @apiDescription Returns the public profile of the currently authenticated user
-  *
-  * @apiUse AuthParam
-  *
+  * @apiDefine publicUser [Public User]
   * @apiSuccess {Object} user The user's public profile
   * @apiSuccess {String} user.uid The user's unique id
   * @apiSuccess {String} user.name The user's name
@@ -34,7 +28,20 @@ router.param('googleid', googleIdParam)
   * @apiSuccess {Number[]} user.badges List of badge ids the user has
   * @apiSuccess {Strine} user.role The users current permission role
 */
+
+/**
+  * @api {get} /api/user/v1/ Get current user
+  * @apiVersion 1.0.0
+  * @apiName GetSelfUser
+  * @apiGroup User
+  * @apiDescription Returns the public profile of the currently authenticated user
+  *
+  * @apiUse AuthParam
+  *
+  * @apiUse publicUser
+*/
 router.get('/', (req, res) => {
+  console.log('req.user', req.user)
   res.json(req.user.getPublicUser())
 })
 
@@ -47,21 +54,16 @@ router.get('/', (req, res) => {
   *
   * @apiUse AuthParam
   *
-  * @apiSuccess {Object[]} user The user's public profile
-  * @apiSuccess {String} user.uid The user's unique id
-  * @apiSuccess {String} user.name The user's name
-  * @apiSuccess {String} user.nickname The user's nickname
-  * @apiSuccess {Number} user.score The user's total score
-  * @apiSuccess {Number[]} user.badges List of badge ids the user has
-  * @apiSuccess {Strine} user.role The users current permission role
+  * @apiUse publicUser
 */
-router.get('/leaderboard', (req, res) => {
-  User.getLeaderboard().then((leaderboard) => {
+router.get('/leaderboard', async (req, res) => {
+  try {
+    let leaderboard = await User.getLeaderboard()
     res.json(leaderboard)
-  }).catch((err) => {
-    // NOTE: In production we will won't want to log the error message directly
-    res.error(err, 500)
-  })
+  } catch (getLeaderboardError) {
+    logger.error(getLeaderboardError, {context: 'getLeaderboardError'})
+    res.status(500).error(getLeaderboardError)
+  }
 })
 
 router.use('/:googleid/', user)

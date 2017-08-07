@@ -40,7 +40,7 @@ router.get('/', (req, res) => {
 */
 router.put('/', permission(['teacher', 'developer', 'admin']), (req, res) => {
   if (req.body.nickname == null) {
-    return res.error('Body Parameters Not Met')
+    return res.status(400).error('Body Parameters Not Met')
   }
   // NOTE: Potentially install a profanity filter
   req.targetUser.nickname = req.body.nickname.toString().trim()
@@ -48,7 +48,7 @@ router.put('/', permission(['teacher', 'developer', 'admin']), (req, res) => {
     return res.send(req.targetUser.nickname)
   }).catch((dbError) => {
     logger.error(dbError, {content: 'dbError'})
-    return res.error()
+    return res.status(500).error()
   })
 })
 

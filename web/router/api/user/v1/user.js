@@ -17,13 +17,7 @@ const router = new Router()
   * @apiUse AuthParam
   * @apiUse GoogleIdParam
   *
-  * @apiSuccess {Object} user The user's public profile
-  * @apiSuccess {String} user.uid The user's unique id
-  * @apiSuccess {String} user.name The user's name
-  * @apiSuccess {String} user.nickname The user's nickname
-  * @apiSuccess {Number} user.score The user's total score
-  * @apiSuccess {Number[]} user.badges List of badge ids the user has
-  * @apiSuccess {Strine} user.role The users current permission role
+  * @apiUse publicUser
 */
 router.get(['/', '/public'], (req, res) => {
   // Return the public user
@@ -97,7 +91,7 @@ router.get('/details', permission(['teacher', 'stuco', 'developer', 'admin']), (
 router.get('/all', permission(['developer', 'admin']), (req, res) => {
   // Return all info on the user including some private information
   if (req.isSelf) {
-    return res.error('Permission Requirements Not Met')
+    return res.status(403).error('Permission Requirements Not Met')
   }
   res.json(req.targetUser)
 })

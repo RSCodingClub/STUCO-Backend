@@ -2,7 +2,7 @@ language: node_js
 node_js:
   - "node"
   - "6"
-  - "iojs"
+  - "7"
 addons:
     code_climate:
         repo_token: 78a09e7584eb00ab2c2ab29ca0e9cdfaaa7fc7b9d8d5269079799378779fdf96
